@@ -1,0 +1,757 @@
+<title>Реестр переуступки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg:#F3F4F7; --surface:#FFFFFF; --surface-2:#EAECF0;
+  --ink:#1A1E27; --ink-soft:#606776; --ink-faint:#8991A1;
+  --rule:#DEE1E7; --rule-strong:#C6CAD2;
+  --accent:#9C6B32; --accent-ink:#FFFFFF; --accent-soft:#F0E4D3;
+  --profit:#1E8A5C; --profit-soft:#E1F3EA;
+  --cost:#C13F49; --cost-soft:#FAE7E8;
+  --shadow: 0 1px 2px rgba(20,20,30,.04), 0 6px 20px -8px rgba(20,20,30,.10);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12151A; --surface:#191D24; --surface-2:#20252D;
+    --ink:#EDEFF3; --ink-soft:#9BA2B0; --ink-faint:#6B7280;
+    --rule:#2A3038; --rule-strong:#38404B;
+    --accent:#D3A566; --accent-ink:#1A1300; --accent-soft:#332615;
+    --profit:#43D398; --profit-soft:#123527;
+    --cost:#EB7C83; --cost-soft:#3B191C;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12151A; --surface:#191D24; --surface-2:#20252D;
+  --ink:#EDEFF3; --ink-soft:#9BA2B0; --ink-faint:#6B7280;
+  --rule:#2A3038; --rule-strong:#38404B;
+  --accent:#D3A566; --accent-ink:#1A1300; --accent-soft:#332615;
+  --profit:#43D398; --profit-soft:#123527;
+  --cost:#EB7C83; --cost-soft:#3B191C;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 30px -10px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:14px; line-height:1.5;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:28px 20px 64px;}
+
+.masthead{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:6px;}
+.masthead h1{
+  font-family:"Fraunces",serif; font-weight:600; font-size:clamp(26px,4vw,36px);
+  margin:0; text-wrap:balance; letter-spacing:-0.01em;
+}
+.masthead .tag{color:var(--ink-faint); font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; margin-top:4px; display:block;}
+.reset-btn{
+  border:1px solid var(--rule-strong); background:var(--surface); color:var(--ink-soft);
+  font-family:inherit; font-size:12.5px; padding:8px 14px; border-radius:8px; cursor:pointer;
+  transition:border-color .15s, color .15s;
+}
+.reset-btn:hover{border-color:var(--accent); color:var(--accent);}
+.reset-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+
+.fixnote{
+  margin:18px 0 28px; padding:12px 16px; border-radius:10px;
+  background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  font-size:12.5px; color:var(--ink-soft); line-height:1.6;
+}
+.fixnote b{color:var(--ink); font-weight:600;}
+
+.tiles{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px;}
+.tile{
+  background:var(--surface); border:1px solid var(--rule); border-radius:12px;
+  padding:16px 18px; box-shadow:var(--shadow);
+}
+.tile .k{font-size:11.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;}
+.tile .v{
+  font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;
+  font-size:22px; font-weight:600; margin-top:6px; letter-spacing:-0.01em;
+}
+.tile .sub{font-size:11.5px; color:var(--ink-faint); margin-top:4px; font-family:"IBM Plex Mono",monospace;}
+.v.profit{color:var(--profit);} .v.cost{color:var(--cost);} .v.accent{color:var(--accent);}
+
+.card{
+  background:var(--surface); border:1px solid var(--rule); border-radius:14px;
+  padding:22px 24px 18px; box-shadow:var(--shadow); margin-bottom:20px;
+}
+.card h2{
+  font-family:"Fraunces",serif; font-weight:600; font-size:18px; margin:0 0 2px;
+}
+.card .desc{color:var(--ink-faint); font-size:12px; margin:0 0 4px;}
+.card-meta{color:var(--ink-faint); font-size:11.5px; font-family:"IBM Plex Mono",monospace; margin:0 0 16px;}
+
+.params-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px 18px;}
+.field label{display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;}
+.field .hint{display:block; font-size:10.5px; color:var(--ink-faint); margin-top:4px;}
+.field input[type=text], .field input[type=number]{
+  width:100%; font-family:"IBM Plex Mono",monospace; font-size:13.5px;
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:7px;
+  padding:8px 10px; color:var(--ink); transition:border-color .15s, background .15s;
+}
+.field input[type=text]{font-family:"IBM Plex Sans",sans-serif;}
+.field input:focus-visible{outline:none; border-color:var(--accent); background:var(--surface);}
+.field .unitwrap{position:relative;}
+.field .unitwrap input{padding-right:26px;}
+.field .unitwrap .unit{position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:12px; font-family:"IBM Plex Mono",monospace; pointer-events:none;}
+
+.ledgers{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}
+@media (max-width:820px){ .ledgers{grid-template-columns:1fr;} .tiles{grid-template-columns:repeat(2,1fr);} }
+
+.ledger-row{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 0; border-bottom:1px solid var(--rule);}
+.ledger-row:last-child{border-bottom:none;}
+.ledger-row .label{color:var(--ink-soft); font-size:12.5px;}
+.ledger-row .ctrl{display:flex; align-items:center; gap:6px; flex-shrink:0;}
+.ledger-row .rate-input{
+  width:52px; font-family:"IBM Plex Mono",monospace; font-size:12.5px; text-align:right;
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:6px; padding:5px 6px; color:var(--ink);
+}
+.ledger-row .rate-input:focus-visible{outline:none; border-color:var(--accent);}
+.ledger-row .pct-sign{color:var(--ink-faint); font-size:11.5px;}
+.ledger-row .money-input{
+  width:112px; font-family:"IBM Plex Mono",monospace; font-size:13px; text-align:right;
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:7px; padding:6px 9px; color:var(--ink);
+}
+.ledger-row .money-input:focus-visible{outline:none; border-color:var(--accent);}
+.ledger-row .computed{
+  font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:13px;
+  color:var(--ink); min-width:112px; text-align:right; padding:6px 9px;
+  background:var(--surface-2); border-radius:7px;
+}
+.ledger-row.total{border-top:2px solid var(--ink); border-bottom:none; margin-top:4px; padding-top:12px;}
+.ledger-row.total .label{color:var(--ink); font-weight:600; font-size:14px;}
+.ledger-row.total .computed{background:transparent; font-weight:700; font-size:17px; padding:0;}
+.total-sub{display:flex; justify-content:flex-end; margin:-2px 0 4px; font-size:11px; color:var(--ink-faint); font-family:"IBM Plex Mono",monospace;}
+
+.subhead{font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); margin:18px 0 4px;}
+.row-caption{font-size:11.5px; color:var(--ink-faint); margin:8px 0 0; line-height:1.5;}
+.payee-fixed{color:var(--ink-soft); font-size:12.5px;}
+
+.deriv{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+@media (max-width:640px){ .deriv{grid-template-columns:1fr;} }
+.deriv-list .ledger-row .label{font-size:12.5px;}
+
+.econ-row{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--rule); font-size:12.5px;}
+.econ-row:last-child{border-bottom:none;}
+.econ-row .val{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;}
+
+.switch{position:relative; display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:12.5px; color:var(--ink-soft); user-select:none;}
+.switch input{position:absolute; opacity:0; width:1px; height:1px;}
+.switch .track{width:34px; height:20px; flex-shrink:0; background:var(--surface-2); border:1px solid var(--rule-strong); border-radius:999px; position:relative; transition:background .15s, border-color .15s;}
+.switch .track::after{content:""; position:absolute; top:1px; left:1px; width:16px; height:16px; border-radius:50%; background:var(--ink-faint); transition:transform .15s, background .15s;}
+.switch input:checked + .track{background:var(--accent-soft); border-color:var(--accent);}
+.switch input:checked + .track::after{transform:translateX(14px); background:var(--accent);}
+.switch input:focus-visible + .track{outline:2px solid var(--accent); outline-offset:2px;}
+
+.export-row{display:flex; gap:10px; margin-top:18px; padding-top:14px; border-top:1px dashed var(--rule-strong); flex-wrap:wrap; align-items:center;}
+.export-btn{
+  flex:1; min-width:150px; border:1px solid var(--rule-strong); background:var(--surface-2); color:var(--ink);
+  font-family:inherit; font-size:12.5px; padding:9px 12px; border-radius:8px; cursor:pointer;
+  transition:border-color .15s, background .15s, color .15s;
+}
+.export-btn:hover{border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
+.export-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.export-btn:disabled{opacity:.5; cursor:not-allowed;}
+.export-status{font-size:11px; color:var(--ink-faint); width:100%; min-height:14px;}
+
+footer{margin-top:20px; color:var(--ink-faint); font-size:11.5px; line-height:1.7;}
+footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
+</style>
+
+<div class="wrap">
+  <div class="masthead">
+    <div>
+      <h1 id="propTitle">Sunrise Bay T2 — 501</h1>
+      <span class="tag">Реестр переуступки офф-плана</span>
+    </div>
+    <button class="reset-btn" id="resetBtn">Сбросить к примеру</button>
+  </div>
+
+  <div class="fixnote">
+    <b>Формат карточек:</b> «Обязательства покупателя» ниже — короткая версия для пересылки: итог и кому сколько платить, без ставок. Все ставки и сборы редактируются в «Параметрах сделки». НДС на комиссии — фиксированные 5% (стандарт ОАЭ), отдельным полем не задаётся.
+  </div>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="k">Итого расходы покупателя</div>
+      <div class="v accent" id="tileBuyerTotal">—</div>
+    </div>
+    <div class="tile">
+      <div class="k">Чистая прибыль продавца</div>
+      <div class="v" id="tileSellerProfit">—</div>
+    </div>
+    <div class="tile">
+      <div class="k">Доходность (ROI)</div>
+      <div class="v" id="tileRoi">—</div>
+      <div class="sub" id="tileRoiAnn">аннуализ. —</div>
+    </div>
+    <div class="tile">
+      <div class="k">Комиссия агентства всего</div>
+      <div class="v" id="tileCommission">—</div>
+      <div class="sub">покупатель + продавец</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Параметры сделки</h2>
+    <p class="desc">Общие переменные и ставки покупателя. Здесь всё редактируется; карточки ниже — уже готовый результат.</p>
+    <div class="params-grid">
+      <div class="field">
+        <label for="propName">Объект</label>
+        <input type="text" id="propName" value="Sunrise Bay T2 — 501">
+      </div>
+      <div class="field">
+        <label for="dealPrice">Цена сделки</label>
+        <input type="number" id="dealPrice" value="1195000" step="1">
+      </div>
+      <div class="field">
+        <label for="originalPrice">Первоначальная цена (SPA)</label>
+        <input type="number" id="originalPrice" value="1011676" step="1">
+      </div>
+      <div class="field">
+        <label for="paidPct">Оплачено застройщику</label>
+        <div class="unitwrap"><input type="number" id="paidPct" value="40" step="0.1"><span class="unit">%</span></div>
+      </div>
+      <div class="field">
+        <label for="holdingMonths">Срок владения, мес.</label>
+        <input type="number" id="holdingMonths" value="18" step="1" min="1">
+      </div>
+    </div>
+
+    <div class="subhead">Ставки и сборы покупателя</div>
+    <div class="params-grid">
+      <div class="field">
+        <label for="dldPct">DLD Transfer Fee</label>
+        <div class="unitwrap"><input type="number" id="dldPct" value="4" step="0.1"><span class="unit">%</span></div>
+      </div>
+      <div class="field">
+        <label for="titleDeedFee">Title Deed Fee</label>
+        <input type="number" id="titleDeedFee" value="580" step="1">
+      </div>
+      <div class="field">
+        <label for="trusteeFee">Trustee Office Fee</label>
+        <input type="number" id="trusteeFee" value="4200" step="1">
+      </div>
+      <div class="field">
+        <label for="buyerCommPct">Комиссия агентства</label>
+        <div class="unitwrap"><input type="number" id="buyerCommPct" value="2" step="0.1"><span class="unit">%</span></div>
+        <span class="hint">+ НДС 5%, фикс.</span>
+      </div>
+      <div class="field">
+        <label for="buyerConvFee">Conveyancing Fee</label>
+        <input type="number" id="buyerConvFee" value="0" step="1">
+      </div>
+    </div>
+
+    <div class="subhead">Ипотека покупателя</div>
+    <div class="ledger-row">
+      <span class="label">Покупка с привлечением ипотеки</span>
+      <label class="switch">
+        <input type="checkbox" id="hasMortgage">
+        <span class="track"></span>
+        <span id="mortgageStateLabel">Нет</span>
+      </label>
+    </div>
+    <div id="mortgageFields" hidden>
+      <p class="row-caption">Ипотека на переуступку до сдачи объекта в Дубае доступна ограниченно: чаще банк финансирует только финальный платёж застройщику при хендовере, а не выкуп доли у текущего собственника. Уточняйте у банка или ипотечного брокера, что именно можно профинансировать в конкретной сделке.</p>
+      <div class="params-grid" style="margin-top:12px;">
+        <div class="field">
+          <label for="loanAmount">Сумма кредита</label>
+          <input type="number" id="loanAmount" value="0" step="1">
+        </div>
+        <div class="field">
+          <label for="bankFeePct">Комиссия банка</label>
+          <div class="unitwrap"><input type="number" id="bankFeePct" value="1" step="0.1"><span class="unit">%</span></div>
+        </div>
+        <div class="field">
+          <label for="valuationFee">Оценка объекта (valuation)</label>
+          <input type="number" id="valuationFee" value="3000" step="1">
+        </div>
+        <div class="field">
+          <label for="dldMortgagePct">Регистрация в DLD</label>
+          <div class="unitwrap"><input type="number" id="dldMortgagePct" value="0.25" step="0.05"><span class="unit">%</span></div>
+        </div>
+        <div class="field">
+          <label for="dldMortgageFixed">Админ. сбор DLD</label>
+          <input type="number" id="dldMortgageFixed" value="290" step="1">
+        </div>
+        <div class="field">
+          <label for="insuranceYearly">Страхование, в год</label>
+          <input type="number" id="insuranceYearly" value="2500" step="1">
+          <span class="hint">не входит в итог сделки</span>
+        </div>
+      </div>
+      <div class="ledger-row" style="margin-top:4px;">
+        <span class="label">Итого расходы на ипотеку (разово)</span>
+        <span class="computed" id="r_mortgageTotal">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ledgers">
+    <div class="card" id="buyerCard">
+      <h2>Обязательства покупателя</h2>
+      <p class="card-meta" id="buyerCardMeta">—</p>
+
+      <div class="ledger-row total" style="border-top:none; padding-top:0;">
+        <span class="label">Итого к оплате</span>
+        <span class="computed" id="r_buyerTotal">—</span>
+      </div>
+      <div class="total-sub" id="r_buyerTotalPct">—</div>
+
+      <div class="subhead">Кому и сколько</div>
+      <div class="ledger-row">
+        <span class="payee-fixed" id="bd_dev_label">Остаток по рассрочке</span>
+        <span class="computed" id="r_bd_dev">—</span>
+      </div>
+      <div class="ledger-row">
+        <span class="payee-fixed">Продавцу</span>
+        <span class="computed" id="r_bd_seller">—</span>
+      </div>
+      <div class="ledger-row">
+        <span class="payee-fixed">Госсборы (DLD + Trustee + Title Deed)</span>
+        <span class="computed" id="r_bd_dld">—</span>
+      </div>
+      <div class="ledger-row">
+        <span class="payee-fixed">Комиссия агентства</span>
+        <span class="computed" id="r_bd_agency">—</span>
+      </div>
+      <div class="ledger-row" id="row_bd_bank" hidden>
+        <span class="payee-fixed">Ипотека (банк + DLD)</span>
+        <span class="computed" id="r_bd_bank">—</span>
+      </div>
+      <p class="row-caption">«Продавцу» — цена объекта минус остаток по рассрочке: покупатель довносит остаток напрямую застройщику, а разницу отдаёт продавцу.</p>
+
+      <div class="export-row no-export">
+        <button class="export-btn" id="buyerExportPngBtn">Скачать как изображение</button>
+        <button class="export-btn" id="buyerExportTxtBtn">Скачать как текст</button>
+        <span class="export-status" id="buyerExportStatus"></span>
+      </div>
+    </div>
+
+    <div class="card" id="sellerCard">
+      <h2>Обязательства продавца</h2>
+      <p class="card-meta" id="sellerCardMeta">—</p>
+
+      <div class="ledger-row">
+        <span class="label">Цена объекта</span>
+        <span class="computed" id="r_dealPrice_sell">—</span>
+      </div>
+      <div class="ledger-row">
+        <span class="label">Комиссия агентства (вкл. НДС 5%)</span>
+        <div class="ctrl">
+          <input type="number" class="rate-input" id="sellerCommPct" value="2" step="0.1"><span class="pct-sign">%</span>
+          <span class="computed" id="r_sellerComm">—</span>
+        </div>
+      </div>
+      <div class="ledger-row">
+        <span class="label">Conveyancing Fee</span>
+        <input type="number" class="money-input" id="sellerConvFee" value="5250" step="1">
+      </div>
+      <div class="ledger-row">
+        <span class="label">Late Payment Fee (если есть)</span>
+        <input type="number" class="money-input" id="lateFee" value="0" step="1">
+      </div>
+      <div class="ledger-row">
+        <span class="label">NOC Fee (застройщик)</span>
+        <input type="number" class="money-input" id="nocFee" value="5250" step="1">
+      </div>
+      <div class="ledger-row">
+        <span class="label">Assignment Fee (сбор за переуступку)</span>
+        <div class="ctrl">
+          <input type="number" class="rate-input" id="assignmentFeePct" value="0" step="0.1"><span class="pct-sign">%</span>
+          <span class="computed" id="r_assignmentFee">—</span>
+        </div>
+      </div>
+      <p class="row-caption">Отдельно от NOC — часть застройщиков берёт 2–5% от первоначальной цены за одобрение переуступки до завершения строительства. Не универсально: по умолчанию 0%, уточняйте у застройщика.</p>
+
+      <div class="ledger-row total">
+        <span class="label">Итого обязательств продавца</span>
+        <span class="computed" id="r_sellerTotal">—</span>
+      </div>
+      <div class="total-sub" id="r_sellerTotalPct">—</div>
+
+      <div class="subhead">Разбивка платежей продавца</div>
+      <div class="ledger-row">
+        <span class="payee-fixed" id="sd_dev_label">NOC и сборы застройщика</span>
+        <span class="computed" id="r_sd_dev">—</span>
+      </div>
+      <div class="ledger-row">
+        <span class="payee-fixed">Агентская комиссия</span>
+        <span class="computed" id="r_sd_agency">—</span>
+      </div>
+      <div class="ledger-row total">
+        <span class="label">Итого</span>
+        <span class="computed" id="r_sd_total">—</span>
+      </div>
+
+      <div class="subhead">Прибыль и доходность</div>
+      <div class="deriv">
+        <div class="deriv-list">
+          <div class="ledger-row">
+            <span class="label">Получено от покупателя напрямую</span>
+            <span class="computed" id="p_received">—</span>
+          </div>
+          <div class="ledger-row">
+            <span class="label">Минус обязательства продавца</span>
+            <span class="computed" id="p_minusObl">—</span>
+          </div>
+          <div class="ledger-row">
+            <span class="label">Чистые поступления продавцу</span>
+            <span class="computed" id="p_netProceeds">—</span>
+          </div>
+          <div class="ledger-row">
+            <span class="label">Минус изначально вложено</span>
+            <span class="computed" id="p_minusInvested">—</span>
+          </div>
+          <div class="ledger-row total">
+            <span class="label">Чистая прибыль</span>
+            <span class="computed" id="p_netProfit">—</span>
+          </div>
+        </div>
+        <div class="deriv-list">
+          <div class="econ-row">
+            <span>Вложено изначально (оплачено застройщику)</span>
+            <span class="val" id="p_invested2">—</span>
+          </div>
+          <div class="econ-row">
+            <span>ROI за срок владения</span>
+            <span class="val" id="p_roi">—</span>
+          </div>
+          <div class="econ-row">
+            <span>ROI, аннуализированная (линейно)</span>
+            <span class="val" id="p_roiAnn">—</span>
+          </div>
+          <div class="econ-row">
+            <span>Срок владения</span>
+            <span class="val" id="p_months">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="export-row no-export">
+        <button class="export-btn" id="sellerExportPngBtn">Скачать как изображение</button>
+        <button class="export-btn" id="sellerExportTxtBtn">Скачать как текст</button>
+        <span class="export-status" id="sellerExportStatus"></span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Совокупные издержки на сделку (обе стороны, без учёта самой цены объекта, без ипотечных расходов): <span class="bench" id="f_combinedPct">—</span> от цены объекта — по рынку такие сделки обычно укладываются в 6–11%.<br>
+    Аннуализация ROI линейная (ROI × 12 / срок в месяцах), а не сложная (CAGR) — ориентир, не точный годовой процент.
+    Ставки — примерные умолчания для Дубая: DLD 4% с покупателя; trustee-офис ~2 100 AED до 500k / ~4 200 AED от 500k вкл. НДС; NOC 500–5 250 AED; Assignment Fee у части застройщиков 2–5% от первоначальной цены; ипотека — комиссия банка 0,5–1%, оценка 2 500–3 500 AED, регистрация в DLD 0,25% + 290 AED, страхование 1 500–4 000 AED/год. Перед сделкой сверяйте актуальные тарифы с trustee-офисом, застройщиком и банком.
+  </footer>
+</div>
+
+<script>
+const VAT_PCT = 5;
+
+const DEFAULTS = {
+  propName:"Sunrise Bay T2 — 501", dealPrice:1195000, originalPrice:1011676, paidPct:40,
+  holdingMonths:18,
+  dldPct:4, titleDeedFee:580, trusteeFee:4200, buyerCommPct:2, buyerConvFee:0,
+  sellerCommPct:2, sellerConvFee:5250, lateFee:0, nocFee:5250, assignmentFeePct:0,
+  hasMortgage:false, loanAmount:0, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
+  dldMortgageFixed:290, insuranceYearly:2500
+};
+
+function el(id){ return document.getElementById(id); }
+function num(id){ return parseFloat(el(id).value) || 0; }
+
+function fmt(v){
+  const r = Math.round(v);
+  const s = Math.abs(r).toLocaleString('ru-RU');
+  return (r < 0 ? '−' : '') + s + ' AED';
+}
+function fmtPct(v, digits){
+  digits = digits === undefined ? 1 : digits;
+  const s = Math.abs(v).toFixed(digits).replace('.', ',');
+  return (v < 0 ? '−' : '') + s + '%';
+}
+function setText(id, text){ el(id).textContent = text; }
+const DATE_STR = new Date().toLocaleDateString('ru-RU');
+
+let STATE = {};
+
+function recompute(){
+  const dealPrice = num('dealPrice');
+  const originalPrice = num('originalPrice');
+  const paidPct = num('paidPct');
+  const vatPct = VAT_PCT;
+  const holdingMonths = Math.max(num('holdingMonths'), 0.0001);
+  const propName = el('propName').value || 'Объект';
+
+  const paidAmount = originalPrice * paidPct / 100;
+  const remainToDev = originalPrice - paidAmount;
+  const toSeller = dealPrice - remainToDev;
+
+  const dldPct = num('dldPct');
+  const dldFee = dealPrice * dldPct / 100;
+  const titleDeedFee = num('titleDeedFee');
+  const trusteeFee = num('trusteeFee');
+  const buyerCommPct = num('buyerCommPct');
+  const buyerComm = dealPrice * buyerCommPct / 100 * (1 + vatPct / 100);
+  const buyerConvFee = num('buyerConvFee');
+
+  const hasMortgage = el('hasMortgage').checked;
+  el('mortgageFields').hidden = !hasMortgage;
+  el('mortgageStateLabel').textContent = hasMortgage ? 'Да' : 'Нет';
+  if (hasMortgage && num('loanAmount') === 0 && remainToDev > 0) {
+    el('loanAmount').value = Math.round(remainToDev);
+  }
+  const loanAmount = hasMortgage ? num('loanAmount') : 0;
+  const bankFeePct = num('bankFeePct');
+  const bankFee = loanAmount * bankFeePct / 100;
+  const valuationFee = num('valuationFee');
+  const dldMortgagePct = num('dldMortgagePct');
+  const dldMortgageRatePart = loanAmount * dldMortgagePct / 100;
+  const dldMortgageFixed = num('dldMortgageFixed');
+  const dldMortgageFee = dldMortgageRatePart + dldMortgageFixed;
+  const mortgageTotal = hasMortgage ? (bankFee + valuationFee + dldMortgageFee) : 0;
+  const insuranceYearly = num('insuranceYearly');
+
+  const buyerTotal = dealPrice + dldFee + titleDeedFee + trusteeFee + buyerComm + buyerConvFee + mortgageTotal;
+  const buyerCostsOnly = buyerTotal - dealPrice;
+  const buyerCostsPct = dealPrice !== 0 ? buyerCostsOnly / dealPrice * 100 : 0;
+
+  const bdDev = remainToDev;
+  const bdSeller = toSeller;
+  const bdAgency = buyerComm + buyerConvFee;
+  const bdDld = dldFee + titleDeedFee + trusteeFee;
+  const bdBank = mortgageTotal;
+  const bdTotal = bdDev + bdSeller + bdAgency + bdDld + bdBank;
+
+  const sellerCommPct = num('sellerCommPct');
+  const sellerComm = dealPrice * sellerCommPct / 100 * (1 + vatPct / 100);
+  const sellerConvFee = num('sellerConvFee');
+  const lateFee = num('lateFee');
+  const nocFee = num('nocFee');
+  const assignmentFeePct = num('assignmentFeePct');
+  const assignmentFee = originalPrice * assignmentFeePct / 100;
+  const sellerTotal = sellerComm + sellerConvFee + lateFee + nocFee + assignmentFee;
+  const sellerCostsPct = dealPrice !== 0 ? sellerTotal / dealPrice * 100 : 0;
+
+  const sdDev = nocFee + lateFee + assignmentFee;
+  const sdAgency = sellerComm + sellerConvFee;
+  const sdTotal = sdDev + sdAgency;
+
+  const netProceeds = toSeller - sellerTotal;
+  const netProfit = netProceeds - paidAmount;
+  const roi = paidAmount !== 0 ? (netProfit / paidAmount * 100) : 0;
+  const roiAnn = roi * (12 / holdingMonths);
+
+  const totalComm = buyerComm + sellerComm;
+  const combinedPct = dealPrice !== 0 ? (buyerCostsOnly - mortgageTotal + sellerTotal) / dealPrice * 100 : 0;
+
+  STATE = {
+    propName, dealPrice, originalPrice, paidPct, vatPct, holdingMonths,
+    dldPct, dldFee, titleDeedFee, trusteeFee, buyerCommPct, buyerComm, buyerConvFee,
+    paidAmount, remainToDev, toSeller, buyerTotal, buyerCostsPct,
+    bdDev, bdSeller, bdAgency, bdDld, bdBank, bdTotal,
+    hasMortgage, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
+    sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerTotal, sellerCostsPct,
+    sdDev, sdAgency, sdTotal, netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
+  };
+
+  el('propTitle').textContent = propName;
+  setText('buyerCardMeta', propName + ' · ' + fmt(dealPrice) + ' · сформировано ' + DATE_STR);
+  setText('sellerCardMeta', propName + ' · ' + fmt(dealPrice) + ' · сформировано ' + DATE_STR);
+
+  setText('r_dealPrice_sell', fmt(dealPrice));
+  setText('r_mortgageTotal', fmt(mortgageTotal));
+  setText('r_buyerTotal', fmt(buyerTotal));
+  setText('r_buyerTotalPct', '= ' + fmtPct(buyerCostsPct) + ' сверх цены объекта');
+
+  setText('bd_dev_label', 'Остаток по рассрочке — ' + propName);
+  setText('r_bd_dev', fmt(bdDev));
+  setText('r_bd_seller', fmt(bdSeller));
+  setText('r_bd_agency', fmt(bdAgency));
+  setText('r_bd_dld', fmt(bdDld));
+  el('row_bd_bank').hidden = !hasMortgage;
+  setText('r_bd_bank', fmt(bdBank));
+
+  setText('r_sellerComm', fmt(sellerComm));
+  setText('r_assignmentFee', fmt(assignmentFee));
+  setText('r_sellerTotal', fmt(sellerTotal));
+  setText('r_sellerTotalPct', '= ' + fmtPct(sellerCostsPct) + ' от цены объекта');
+  setText('sd_dev_label', propName + ' — NOC и сборы застройщика');
+  setText('r_sd_dev', fmt(sdDev));
+  setText('r_sd_agency', fmt(sdAgency));
+  setText('r_sd_total', fmt(sdTotal));
+
+  setText('p_received', fmt(toSeller));
+  setText('p_minusObl', '− ' + fmt(sellerTotal));
+  setText('p_netProceeds', fmt(netProceeds));
+  setText('p_minusInvested', '− ' + fmt(paidAmount));
+  setText('p_netProfit', fmt(netProfit));
+  setText('p_invested2', fmt(paidAmount));
+  setText('p_roi', fmtPct(roi));
+  setText('p_roiAnn', fmtPct(roiAnn));
+  setText('p_months', holdingMonths.toLocaleString('ru-RU') + ' мес.');
+  setText('f_combinedPct', fmtPct(combinedPct));
+
+  const profitEl = el('p_netProfit');
+  profitEl.style.color = netProfit < 0 ? 'var(--cost)' : 'var(--profit)';
+
+  setText('tileBuyerTotal', fmt(buyerTotal));
+  const sellerProfitTile = el('tileSellerProfit');
+  sellerProfitTile.textContent = fmt(netProfit);
+  sellerProfitTile.className = 'v ' + (netProfit < 0 ? 'cost' : 'profit');
+  const roiTile = el('tileRoi');
+  roiTile.textContent = fmtPct(roi);
+  roiTile.className = 'v ' + (roi < 0 ? 'cost' : 'profit');
+  setText('tileRoiAnn', 'аннуализ. ' + fmtPct(roiAnn));
+  setText('tileCommission', fmt(totalComm));
+}
+
+function applyDefaults(){
+  el('propName').value = DEFAULTS.propName;
+  el('dealPrice').value = DEFAULTS.dealPrice;
+  el('originalPrice').value = DEFAULTS.originalPrice;
+  el('paidPct').value = DEFAULTS.paidPct;
+  el('holdingMonths').value = DEFAULTS.holdingMonths;
+  el('dldPct').value = DEFAULTS.dldPct;
+  el('titleDeedFee').value = DEFAULTS.titleDeedFee;
+  el('trusteeFee').value = DEFAULTS.trusteeFee;
+  el('buyerCommPct').value = DEFAULTS.buyerCommPct;
+  el('buyerConvFee').value = DEFAULTS.buyerConvFee;
+  el('sellerCommPct').value = DEFAULTS.sellerCommPct;
+  el('sellerConvFee').value = DEFAULTS.sellerConvFee;
+  el('lateFee').value = DEFAULTS.lateFee;
+  el('nocFee').value = DEFAULTS.nocFee;
+  el('assignmentFeePct').value = DEFAULTS.assignmentFeePct;
+  el('hasMortgage').checked = DEFAULTS.hasMortgage;
+  el('loanAmount').value = DEFAULTS.loanAmount;
+  el('bankFeePct').value = DEFAULTS.bankFeePct;
+  el('valuationFee').value = DEFAULTS.valuationFee;
+  el('dldMortgagePct').value = DEFAULTS.dldMortgagePct;
+  el('dldMortgageFixed').value = DEFAULTS.dldMortgageFixed;
+  el('insuranceYearly').value = DEFAULTS.insuranceYearly;
+  recompute();
+}
+
+document.querySelectorAll('input').forEach(function(input){
+  input.addEventListener('input', recompute);
+  if (input.type === 'checkbox') input.addEventListener('change', recompute);
+});
+el('resetBtn').addEventListener('click', applyDefaults);
+
+/* ---- export: text ---- */
+function buildBuyerText(){
+  const s = STATE;
+  const L = [];
+  L.push(s.propName);
+  L.push('ОБЯЗАТЕЛЬСТВА ПОКУПАТЕЛЯ');
+  L.push('сформировано ' + DATE_STR);
+  L.push('———————————————————————');
+  L.push('ИТОГО К ОПЛАТЕ: ' + fmt(s.buyerTotal) + '  (' + fmtPct(s.buyerCostsPct) + ' сверх цены объекта)');
+  L.push('');
+  L.push('Кому и сколько:');
+  L.push('Остаток по рассрочке — ' + s.propName + ': ' + fmt(s.bdDev));
+  L.push('Продавцу: ' + fmt(s.bdSeller));
+  L.push('Госсборы (DLD + Trustee + Title Deed): ' + fmt(s.bdDld));
+  L.push('Комиссия агентства: ' + fmt(s.bdAgency));
+  if (s.hasMortgage) L.push('Ипотека (банк + DLD): ' + fmt(s.bdBank));
+  return L.join('\n');
+}
+
+function buildSellerText(){
+  const s = STATE;
+  const L = [];
+  L.push(s.propName);
+  L.push('ОБЯЗАТЕЛЬСТВА ПРОДАВЦА');
+  L.push('сформировано ' + DATE_STR);
+  L.push('———————————————————————');
+  L.push('Цена объекта: ' + fmt(s.dealPrice));
+  L.push('Комиссия агентства (' + fmtPct(s.sellerCommPct) + ' + НДС ' + fmtPct(s.vatPct) + '): ' + fmt(s.sellerComm));
+  L.push('Conveyancing Fee: ' + fmt(s.sellerConvFee));
+  L.push('Late Payment Fee: ' + fmt(s.lateFee));
+  L.push('NOC Fee: ' + fmt(s.nocFee));
+  L.push('Assignment Fee (' + fmtPct(s.assignmentFeePct) + ' от перв. цены): ' + fmt(s.assignmentFee));
+  L.push('———————————————————————');
+  L.push('ИТОГО: ' + fmt(s.sellerTotal) + '  (' + fmtPct(s.sellerCostsPct) + ' от цены объекта)');
+  L.push('');
+  L.push('Разбивка платежей:');
+  L.push(s.propName + ' — NOC и сборы застройщика: ' + fmt(s.sdDev));
+  L.push('Агентская комиссия: ' + fmt(s.sdAgency));
+  L.push('Итого: ' + fmt(s.sdTotal));
+  L.push('');
+  L.push('Прибыль и доходность:');
+  L.push('Получено от покупателя напрямую: ' + fmt(s.toSeller));
+  L.push('Минус обязательства продавца: − ' + fmt(s.sellerTotal));
+  L.push('Чистые поступления: ' + fmt(s.netProceeds));
+  L.push('Минус изначально вложено: − ' + fmt(s.paidAmount));
+  L.push('ЧИСТАЯ ПРИБЫЛЬ: ' + fmt(s.netProfit));
+  L.push('ROI за срок владения: ' + fmtPct(s.roi));
+  L.push('ROI аннуализированная: ' + fmtPct(s.roiAnn) + ' (' + s.holdingMonths.toLocaleString('ru-RU') + ' мес.)');
+  return L.join('\n');
+}
+
+function slug(str){
+  return (str || 'deal').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'deal';
+}
+
+/* ---- export: capability wiring ---- */
+let downloadsNs = null;
+(async function initCaps(){
+  try{
+    if (window.claude && typeof window.claude.use === 'function') {
+      downloadsNs = await window.claude.use('downloads');
+    }
+  } catch(e){ downloadsNs = null; }
+})();
+
+async function saveFile(filename, data, statusId){
+  const statusEl = el(statusId);
+  if (!downloadsNs) {
+    if (statusEl) statusEl.textContent = 'Скачивание недоступно в этом окне.';
+    return;
+  }
+  try{
+    await downloadsNs.save({ filename, data });
+    if (statusEl) statusEl.textContent = 'Сохранено: ' + filename;
+  } catch(e){
+    if (statusEl) {
+      if (e && e.code === 'declined') statusEl.textContent = 'Сохранение отменено.';
+      else statusEl.textContent = 'Не удалось сохранить файл.';
+    }
+  }
+}
+
+async function exportCardPng(cardId, filename, statusId){
+  const statusEl = el(statusId);
+  if (typeof html2canvas !== 'function') {
+    if (statusEl) statusEl.textContent = 'Модуль экспорта не загрузился.';
+    return;
+  }
+  const node = el(cardId);
+  const bg = getComputedStyle(document.body).backgroundColor;
+  const canvas = await html2canvas(node, {
+    backgroundColor: bg,
+    scale: 2,
+    ignoreElements: function(e){ return e.classList && e.classList.contains('no-export'); }
+  });
+  canvas.toBlob(function(blob){
+    saveFile(filename, blob, statusId);
+  }, 'image/png');
+}
+
+el('buyerExportPngBtn').addEventListener('click', function(){
+  exportCardPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
+});
+el('buyerExportTxtBtn').addEventListener('click', function(){
+  saveFile('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
+});
+el('sellerExportPngBtn').addEventListener('click', function(){
+  exportCardPng('sellerCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
+});
+el('sellerExportTxtBtn').addEventListener('click', function(){
+  saveFile('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
+});
+
+recompute();
+</script>
