@@ -2,27 +2,37 @@
 
 Live: [https://evgheni34-hash.github.io/offplan-assignment-ledger](https://evgheni34-hash.github.io/offplan-assignment-ledger)
 
-Static GitHub Pages calculator for a Dubai off-plan assignment (переуступка). Buyer and seller ledgers stay on one screen. Share cards stay WhatsApp-short. **All share/export is free** — no paywall, no unlock code.
+Static GitHub Pages calculator for a Dubai off-plan assignment (переуступка). **Calc and share/export are free** — no paywall, no UNLOCK49.
 
 WhatsApp CTA (`+971 58 566 8337`) stays for «разбор юнита».
 
 ## Mortgage as LTV %
 
-Buyer mortgage is **LTV % of deal price** (typical 40 / 50 / 60). Implied loan = deal price × %. Bank fee and DLD mortgage registration use that AED amount. Implied AED is shown under the % field and on the buyer ledger.
+Buyer mortgage is **LTV % of deal price**. Implied loan = deal price × %. Bank / DLD mortgage fees use that AED amount.
 
-## В аренде
+## Prorata when «в аренде» is ON
 
-Toggle **Объект в аренде** (off by default). When off, the three fields are hidden and treated as 0 — no WhatsApp lines.
+No raw refund-AED field for SC or rent. Inputs:
 
-When on, three AED fields (default 0):
+- Annual service charge (AED/year)
+- Annual rent (AED/year)
+- Remaining days, **or** transfer date + prepaid-through date (remaining days derived, inclusive)
+- Security deposit (absolute AED → buyer)
 
-| Field | Cashflow | Buyer total | Seller net |
-| --- | --- | --- | --- |
-| Unused prepaid SC | buyer → seller | + SC | + SC |
-| Unused prepaid rent | seller → buyer | − rent | − rent |
-| Security deposit | → buyer | − deposit | − deposit |
+Formula (365-day year, not 365.25):
 
-WhatsApp / text export uses **separate directed lines only if > 0**:
+`daily = annual / 365`  
+`refund = daily × remaining days`
+
+Directions:
+
+- SC prorata: buyer → seller
+- Rent prorata: seller → buyer
+- Deposit: → buyer
+
+Derived refunds show on screen. Toggle **off**: fields hide and zero, no WhatsApp lines.
+
+WhatsApp / text — separate lines only if amount > 0:
 
 - `SC buyer→seller X`
 - `rent seller→buyer Y`
@@ -30,15 +40,14 @@ WhatsApp / text export uses **separate directed lines only if > 0**:
 
 ## Share cards
 
-- **Buyer:** short payee card (total + «Кому и сколько»). Tenancy lines only when on and amount > 0.
-- **Seller image:** four lines — net to seller, NOC / assignment, commission + VAT, ROI.
-- **Seller text:** title, итого обязательств, directed tenancy lines if > 0, profit + ROI. No «Кому и сколько» / NOC+agency regroup. No «Разбивка платежей продавца» on screen.
+- **Buyer:** payee split («Кому и сколько») kept.
+- **Seller image:** four lines — net, NOC / assignment, commission + VAT, ROI.
+- **Seller text:** title, итого обязательств, directed lines if > 0, profit + ROI. No «Кому и сколько» NOC/agency regroup. No «Разбивка платежей продавца».
 
 ## How to test
 
-1. Open the live URL.
-2. Change a price — tiles and ledgers update.
-3. **LTV %:** turn on mortgage. Default 50% of 1 195 000 = **597 500 AED**. 40% → **478 000**; 60% → **717 000**.
-4. **В аренде:** toggle on. Enter SC `8000`, rent `5000`, deposit `10000`. Buyer total and seller net move `+8000 −5000 −10000`. Text export shows three directed lines. Toggle off — fields hide, values zero, no tenancy lines.
-5. Confirm there is no «Разбивка платежей продавца» and no 49 AED paywall / unlock field.
-6. Share or download many times — every export stays free.
+1. Open the live URL. No paywall. Export many times — always free.
+2. Mortgage on: 50% of 1 195 000 = **597 500 AED**; 40% → 478 000; 60% → 717 000.
+3. «В аренде» on. SC year `36500`, rent year `73000`, remaining days `10` → SC **1 000** buyer→seller, rent **2 000** seller→buyer. Or handover `2026-01-01` + prepaid through `2026-01-10` → same 10 days. Deposit `10000` → buyer.
+4. Toggle off — SC/rent/deposit gone from ledgers and text.
+5. Seller card has no «Разбивка». Seller text has no NOC/agency «Кому и сколько».

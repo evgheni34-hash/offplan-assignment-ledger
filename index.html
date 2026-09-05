@@ -102,7 +102,7 @@ body{
 .params-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px 18px;}
 .field label{display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;}
 .field .hint{display:block; font-size:10.5px; color:var(--ink-faint); margin-top:4px;}
-.field input[type=text], .field input[type=number]{
+.field input[type=text], .field input[type=number], .field input[type=date]{
   width:100%; font-family:"IBM Plex Mono",monospace; font-size:13.5px;
   background:var(--surface-2); border:1px solid var(--rule); border-radius:7px;
   padding:8px 10px; color:var(--ink); transition:border-color .15s, background .15s;
@@ -260,20 +260,41 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
     <div id="rentFields" hidden>
       <div class="params-grid" style="margin-top:12px;">
         <div class="field">
-          <label for="prepaidSc">Неиспользованный prepaid SC</label>
-          <input type="number" id="prepaidSc" value="0" step="1" min="0">
-          <span class="hint">покупатель → продавец</span>
+          <label for="scAnnual">SC в год</label>
+          <input type="number" id="scAnnual" value="0" step="1" min="0">
+          <span class="hint">AED / year · prorata buyer→seller</span>
         </div>
         <div class="field">
-          <label for="prepaidRent">Неиспользованная аренда</label>
-          <input type="number" id="prepaidRent" value="0" step="1" min="0">
-          <span class="hint">продавец → покупатель</span>
+          <label for="rentAnnual">Аренда в год</label>
+          <input type="number" id="rentAnnual" value="0" step="1" min="0">
+          <span class="hint">AED / year · prorata seller→buyer</span>
+        </div>
+        <div class="field">
+          <label for="handoverDate">Дата передачи</label>
+          <input type="date" id="handoverDate">
+        </div>
+        <div class="field">
+          <label for="prepaidUntil">Prepaid до</label>
+          <input type="date" id="prepaidUntil">
+        </div>
+        <div class="field">
+          <label for="remainingDays">Осталось дней</label>
+          <input type="number" id="remainingDays" value="0" step="1" min="0">
+          <span class="hint" id="prorateDaysHint">или из дат; daily = год / 365</span>
         </div>
         <div class="field">
           <label for="securityDeposit">Депозит (security deposit)</label>
           <input type="number" id="securityDeposit" value="0" step="1" min="0">
-          <span class="hint">→ покупатель</span>
+          <span class="hint">абсолют AED · → покупатель</span>
         </div>
+      </div>
+      <div class="ledger-row" style="margin-top:4px;">
+        <span class="label">SC prorata · buyer→seller</span>
+        <span class="computed" id="r_scProrate">—</span>
+      </div>
+      <div class="ledger-row">
+        <span class="label">Rent prorata · seller→buyer</span>
+        <span class="computed" id="r_rentProrate">—</span>
       </div>
     </div>
 
@@ -553,11 +574,42 @@ const DEFAULTS = {
   sellerCommPct:2, sellerConvFee:5250, lateFee:0, nocFee:5250, assignmentFeePct:0,
   hasMortgage:false, loanPct:50, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
   dldMortgageFixed:290, insuranceYearly:2500,
-  isRented:false, prepaidSc:0, prepaidRent:0, securityDeposit:0
+  isRented:false, scAnnual:0, rentAnnual:0, handoverDate:"", prepaidUntil:"",
+  remainingDays:0, securityDeposit:0
 };
 
 function el(id){ return document.getElementById(id); }
 function num(id){ return parseFloat(el(id).value) || 0; }
+
+function parseDate(id){
+  const v = el(id).value;
+  if (!v) return null;
+  const d = new Date(v + 'T00:00:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function daysRemaining(from, to){
+  if (!from || !to) return 0;
+  const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+  const diff = Math.round((b - a) / 86400000);
+  return diff < 0 ? 0 : diff + 1;
+}
+
+function prorateAnnual(annual, days){
+  if (annual <= 0 || days <= 0) return 0;
+  return annual / 365 * days;
+}
+
+function remainingFor(untilId, daysId, handover){
+  const until = parseDate(untilId);
+  if (handover && until) {
+    const days = daysRemaining(handover, until);
+    if (document.activeElement !== el(daysId)) el(daysId).value = days;
+    return days;
+  }
+  return Math.max(0, num(daysId));
+}
 
 function fmt(v){
   const r = Math.round(v);
@@ -605,12 +657,18 @@ function recompute(){
   el('rentFields').hidden = !isRented;
   el('rentedStateLabel').textContent = isRented ? 'Да' : 'Нет';
   if (!isRented) {
-    el('prepaidSc').value = 0;
-    el('prepaidRent').value = 0;
+    el('scAnnual').value = 0;
+    el('rentAnnual').value = 0;
+    el('handoverDate').value = '';
+    el('prepaidUntil').value = '';
+    el('remainingDays').value = 0;
     el('securityDeposit').value = 0;
   }
-  const prepaidSc = isRented ? Math.max(num('prepaidSc'), 0) : 0;
-  const prepaidRent = isRented ? Math.max(num('prepaidRent'), 0) : 0;
+  const remainingDays = isRented ? remainingFor('prepaidUntil', 'remainingDays', parseDate('handoverDate')) : 0;
+  const scAnnual = isRented ? Math.max(num('scAnnual'), 0) : 0;
+  const rentAnnual = isRented ? Math.max(num('rentAnnual'), 0) : 0;
+  const prepaidSc = isRented ? prorateAnnual(scAnnual, remainingDays) : 0;
+  const prepaidRent = isRented ? prorateAnnual(rentAnnual, remainingDays) : 0;
   const securityDeposit = isRented ? Math.max(num('securityDeposit'), 0) : 0;
 
   const bankFeePct = num('bankFeePct');
@@ -665,7 +723,7 @@ function recompute(){
     paidAmount, remainToDev, toSeller, buyerTotal, buyerCostsPct, buyerCashForUnit,
     bdDev, bdSeller, bdSc, bdRent, bdDeposit, bdAgency, bdDld, bdBank, bdTotal,
     hasMortgage, loanPct, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
-    isRented, prepaidSc, prepaidRent, securityDeposit,
+    isRented, scAnnual, rentAnnual, remainingDays, prepaidSc, prepaidRent, securityDeposit,
     sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerTotal, sellerCostsPct,
     sdExportDev, sdExportAgency, sdExportOther,
     netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
@@ -690,6 +748,13 @@ function recompute(){
   setText('loanAmountHint', hasMortgage
     ? '= ' + fmt(loanAmount) + ' (цена × ' + fmtPct(loanPct, 0) + ')'
     : 'например 40 / 50 / 60');
+  if (isRented) {
+    setText('r_scProrate', fmt(prepaidSc));
+    setText('r_rentProrate', fmt(prepaidRent));
+    setText('prorateDaysHint', remainingDays > 0
+      ? (remainingDays + ' дн. · daily = год / 365')
+      : 'даты или дни вручную · daily = год / 365');
+  }
 
   setText('bd_dev_label', 'Остаток по рассрочке — ' + propName);
   setText('r_bd_dev', fmt(bdDev));
@@ -784,8 +849,11 @@ function applyDefaults(){
   el('hasMortgage').checked = DEFAULTS.hasMortgage;
   el('loanPct').value = DEFAULTS.loanPct;
   el('isRented').checked = DEFAULTS.isRented;
-  el('prepaidSc').value = DEFAULTS.prepaidSc;
-  el('prepaidRent').value = DEFAULTS.prepaidRent;
+  el('scAnnual').value = DEFAULTS.scAnnual;
+  el('rentAnnual').value = DEFAULTS.rentAnnual;
+  el('handoverDate').value = DEFAULTS.handoverDate;
+  el('prepaidUntil').value = DEFAULTS.prepaidUntil;
+  el('remainingDays').value = DEFAULTS.remainingDays;
   el('securityDeposit').value = DEFAULTS.securityDeposit;
   el('bankFeePct').value = DEFAULTS.bankFeePct;
   el('valuationFee').value = DEFAULTS.valuationFee;
