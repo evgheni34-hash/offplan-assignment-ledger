@@ -172,6 +172,10 @@ body{
 .export-btn:disabled{opacity:.5; cursor:not-allowed;}
 .export-btn.primary{border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
 .export-status{font-size:11px; color:var(--ink-faint); width:100%; min-height:14px;}
+.export-only{display:none;}
+.card.exporting .export-only{display:block;}
+.card.exporting .export-only [hidden]{display:none !important;}
+.card.exporting .no-export{display:none !important;}
 
 footer{margin-top:20px; color:var(--ink-faint); font-size:11.5px; line-height:1.7;}
 footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
@@ -191,7 +195,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
   </div>
 
   <div class="fixnote">
-    <b>Формат карточек:</b> «Обязательства покупателя» ниже — короткая версия для пересылки: итог и кому сколько платить, без ставок. Все ставки и сборы редактируются в «Параметрах сделки». НДС на комиссии — фиксированные 5% (стандарт ОАЭ), отдельным полем не задаётся.
+    <b>Формат карточек:</b> для WhatsApp уходит короткая версия: итог и кому сколько, без всех ставок. У продавца полная смета остаётся на экране. Ставки покупателя редактируются в «Параметрах сделки». НДС на комиссии — фиксированные 5% (стандарт ОАЭ), отдельным полем не задаётся.
   </div>
 
   <div class="tiles">
@@ -361,33 +365,35 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <span class="label">Цена объекта</span>
         <span class="computed" id="r_dealPrice_sell">—</span>
       </div>
-      <div class="ledger-row">
-        <span class="label">Комиссия агентства (вкл. НДС 5%)</span>
-        <div class="ctrl">
-          <input type="number" class="rate-input" id="sellerCommPct" value="2" step="0.1"><span class="pct-sign">%</span>
-          <span class="computed" id="r_sellerComm">—</span>
+      <div class="no-export">
+        <div class="ledger-row">
+          <span class="label">Комиссия агентства (вкл. НДС 5%)</span>
+          <div class="ctrl">
+            <input type="number" class="rate-input" id="sellerCommPct" value="2" step="0.1"><span class="pct-sign">%</span>
+            <span class="computed" id="r_sellerComm">—</span>
+          </div>
         </div>
-      </div>
-      <div class="ledger-row">
-        <span class="label">Conveyancing Fee</span>
-        <input type="number" class="money-input" id="sellerConvFee" value="5250" step="1">
-      </div>
-      <div class="ledger-row">
-        <span class="label">Late Payment Fee (если есть)</span>
-        <input type="number" class="money-input" id="lateFee" value="0" step="1">
-      </div>
-      <div class="ledger-row">
-        <span class="label">NOC Fee (застройщик)</span>
-        <input type="number" class="money-input" id="nocFee" value="5250" step="1">
-      </div>
-      <div class="ledger-row">
-        <span class="label">Assignment Fee (сбор за переуступку)</span>
-        <div class="ctrl">
-          <input type="number" class="rate-input" id="assignmentFeePct" value="0" step="0.1"><span class="pct-sign">%</span>
-          <span class="computed" id="r_assignmentFee">—</span>
+        <div class="ledger-row">
+          <span class="label">Conveyancing Fee</span>
+          <input type="number" class="money-input" id="sellerConvFee" value="5250" step="1">
         </div>
+        <div class="ledger-row">
+          <span class="label">Late Payment Fee (если есть)</span>
+          <input type="number" class="money-input" id="lateFee" value="0" step="1">
+        </div>
+        <div class="ledger-row">
+          <span class="label">NOC Fee (застройщик)</span>
+          <input type="number" class="money-input" id="nocFee" value="5250" step="1">
+        </div>
+        <div class="ledger-row">
+          <span class="label">Assignment Fee (сбор за переуступку)</span>
+          <div class="ctrl">
+            <input type="number" class="rate-input" id="assignmentFeePct" value="0" step="0.1"><span class="pct-sign">%</span>
+            <span class="computed" id="r_assignmentFee">—</span>
+          </div>
+        </div>
+        <p class="row-caption">Отдельно от NOC — часть застройщиков берёт 2–5% от первоначальной цены за одобрение переуступки до завершения строительства. Не универсально: по умолчанию 0%, уточняйте у застройщика.</p>
       </div>
-      <p class="row-caption">Отдельно от NOC — часть застройщиков берёт 2–5% от первоначальной цены за одобрение переуступки до завершения строительства. Не универсально: по умолчанию 0%, уточняйте у застройщика.</p>
 
       <div class="ledger-row total">
         <span class="label">Итого обязательств продавца</span>
@@ -395,60 +401,84 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       </div>
       <div class="total-sub" id="r_sellerTotalPct">—</div>
 
-      <div class="subhead">Разбивка платежей продавца</div>
-      <div class="ledger-row">
-        <span class="payee-fixed" id="sd_dev_label">NOC и сборы застройщика</span>
-        <span class="computed" id="r_sd_dev">—</span>
-      </div>
-      <div class="ledger-row">
-        <span class="payee-fixed">Агентская комиссия</span>
-        <span class="computed" id="r_sd_agency">—</span>
-      </div>
-      <div class="ledger-row total">
-        <span class="label">Итого</span>
-        <span class="computed" id="r_sd_total">—</span>
+      <div class="no-export">
+        <div class="subhead">Разбивка платежей продавца</div>
+        <div class="ledger-row">
+          <span class="payee-fixed" id="sd_dev_label">NOC и сборы застройщика</span>
+          <span class="computed" id="r_sd_dev">—</span>
+        </div>
+        <div class="ledger-row">
+          <span class="payee-fixed">Агентская комиссия</span>
+          <span class="computed" id="r_sd_agency">—</span>
+        </div>
+        <div class="ledger-row total">
+          <span class="label">Итого</span>
+          <span class="computed" id="r_sd_total">—</span>
+        </div>
       </div>
 
-      <div class="subhead">Прибыль и доходность</div>
-      <div class="deriv">
-        <div class="deriv-list">
-          <div class="ledger-row">
-            <span class="label">Получено от покупателя напрямую</span>
-            <span class="computed" id="p_received">—</span>
-          </div>
-          <div class="ledger-row">
-            <span class="label">Минус обязательства продавца</span>
-            <span class="computed" id="p_minusObl">—</span>
-          </div>
-          <div class="ledger-row">
-            <span class="label">Чистые поступления продавцу</span>
-            <span class="computed" id="p_netProceeds">—</span>
-          </div>
-          <div class="ledger-row">
-            <span class="label">Минус изначально вложено</span>
-            <span class="computed" id="p_minusInvested">—</span>
-          </div>
-          <div class="ledger-row total">
-            <span class="label">Чистая прибыль</span>
-            <span class="computed" id="p_netProfit">—</span>
-          </div>
+      <div class="export-only">
+        <div class="subhead">Кому и сколько</div>
+        <div class="ledger-row">
+          <span class="payee-fixed">NOC и сборы застройщика</span>
+          <span class="computed" id="ex_sd_dev">—</span>
         </div>
-        <div class="deriv-list">
-          <div class="econ-row">
-            <span>Вложено изначально (оплачено застройщику)</span>
-            <span class="val" id="p_invested2">—</span>
+        <div class="ledger-row">
+          <span class="payee-fixed">Агентская комиссия</span>
+          <span class="computed" id="ex_sd_agency">—</span>
+        </div>
+        <div class="ledger-row" id="row_sd_other">
+          <span class="payee-fixed">Прочее</span>
+          <span class="computed" id="ex_sd_other">—</span>
+        </div>
+        <div class="ledger-row total">
+          <span class="label">Чистая прибыль · ROI</span>
+          <span class="computed" id="ex_profitRoi">—</span>
+        </div>
+      </div>
+
+      <div class="no-export">
+        <div class="subhead">Прибыль и доходность</div>
+        <div class="deriv">
+          <div class="deriv-list">
+            <div class="ledger-row">
+              <span class="label">Получено от покупателя напрямую</span>
+              <span class="computed" id="p_received">—</span>
+            </div>
+            <div class="ledger-row">
+              <span class="label">Минус обязательства продавца</span>
+              <span class="computed" id="p_minusObl">—</span>
+            </div>
+            <div class="ledger-row">
+              <span class="label">Чистые поступления продавцу</span>
+              <span class="computed" id="p_netProceeds">—</span>
+            </div>
+            <div class="ledger-row">
+              <span class="label">Минус изначально вложено</span>
+              <span class="computed" id="p_minusInvested">—</span>
+            </div>
+            <div class="ledger-row total">
+              <span class="label">Чистая прибыль</span>
+              <span class="computed" id="p_netProfit">—</span>
+            </div>
           </div>
-          <div class="econ-row">
-            <span>ROI за срок владения</span>
-            <span class="val" id="p_roi">—</span>
-          </div>
-          <div class="econ-row">
-            <span>ROI, аннуализированная (линейно)</span>
-            <span class="val" id="p_roiAnn">—</span>
-          </div>
-          <div class="econ-row">
-            <span>Срок владения</span>
-            <span class="val" id="p_months">—</span>
+          <div class="deriv-list">
+            <div class="econ-row">
+              <span>Вложено изначально (оплачено застройщику)</span>
+              <span class="val" id="p_invested2">—</span>
+            </div>
+            <div class="econ-row">
+              <span>ROI за срок владения</span>
+              <span class="val" id="p_roi">—</span>
+            </div>
+            <div class="econ-row">
+              <span>ROI, аннуализированная (линейно)</span>
+              <span class="val" id="p_roiAnn">—</span>
+            </div>
+            <div class="econ-row">
+              <span>Срок владения</span>
+              <span class="val" id="p_months">—</span>
+            </div>
           </div>
         </div>
       </div>
@@ -563,6 +593,9 @@ function recompute(){
   const sdDev = nocFee + lateFee + assignmentFee;
   const sdAgency = sellerComm + sellerConvFee;
   const sdTotal = sdDev + sdAgency;
+  const sdExportDev = nocFee + assignmentFee;
+  const sdExportAgency = sellerComm;
+  const sdExportOther = sellerConvFee + lateFee;
 
   const netProceeds = toSeller - sellerTotal;
   const netProfit = netProceeds - paidAmount;
@@ -579,7 +612,8 @@ function recompute(){
     bdDev, bdSeller, bdAgency, bdDld, bdBank, bdTotal,
     hasMortgage, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
     sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerTotal, sellerCostsPct,
-    sdDev, sdAgency, sdTotal, netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
+    sdDev, sdAgency, sdTotal, sdExportDev, sdExportAgency, sdExportOther,
+    netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
   };
 
   el('propTitle').textContent = propName;
@@ -607,6 +641,13 @@ function recompute(){
   setText('r_sd_dev', fmt(sdDev));
   setText('r_sd_agency', fmt(sdAgency));
   setText('r_sd_total', fmt(sdTotal));
+  setText('ex_sd_dev', fmt(sdExportDev));
+  setText('ex_sd_agency', fmt(sdExportAgency));
+  setText('ex_sd_other', fmt(sdExportOther));
+  el('row_sd_other').hidden = sdExportOther === 0;
+  setText('ex_profitRoi', fmt(netProfit) + '  ·  ' + fmtPct(roi));
+  const exProfit = el('ex_profitRoi');
+  exProfit.style.color = netProfit < 0 ? 'var(--cost)' : 'var(--profit)';
 
   setText('p_received', fmt(toSeller));
   setText('p_minusObl', '− ' + fmt(sellerTotal));
@@ -707,27 +748,14 @@ function buildSellerText(){
   L.push('сформировано ' + DATE_STR);
   L.push('———————————————————————');
   L.push('Цена объекта: ' + fmt(s.dealPrice));
-  L.push('Комиссия агентства (' + fmtPct(s.sellerCommPct) + ' + НДС ' + fmtPct(s.vatPct) + '): ' + fmt(s.sellerComm));
-  L.push('Conveyancing Fee: ' + fmt(s.sellerConvFee));
-  L.push('Late Payment Fee: ' + fmt(s.lateFee));
-  L.push('NOC Fee: ' + fmt(s.nocFee));
-  L.push('Assignment Fee (' + fmtPct(s.assignmentFeePct) + ' от перв. цены): ' + fmt(s.assignmentFee));
-  L.push('———————————————————————');
-  L.push('ИТОГО: ' + fmt(s.sellerTotal) + '  (' + fmtPct(s.sellerCostsPct) + ' от цены объекта)');
+  L.push('ИТОГО ОБЯЗАТЕЛЬСТВ: ' + fmt(s.sellerTotal) + '  (' + fmtPct(s.sellerCostsPct) + ' от цены объекта)');
   L.push('');
-  L.push('Разбивка платежей:');
-  L.push(s.propName + ' — NOC и сборы застройщика: ' + fmt(s.sdDev));
-  L.push('Агентская комиссия: ' + fmt(s.sdAgency));
-  L.push('Итого: ' + fmt(s.sdTotal));
+  L.push('Кому и сколько:');
+  L.push('NOC и сборы застройщика: ' + fmt(s.sdExportDev));
+  L.push('Агентская комиссия: ' + fmt(s.sdExportAgency));
+  if (s.sdExportOther) L.push('Прочее: ' + fmt(s.sdExportOther));
   L.push('');
-  L.push('Прибыль и доходность:');
-  L.push('Получено от покупателя напрямую: ' + fmt(s.toSeller));
-  L.push('Минус обязательства продавца: − ' + fmt(s.sellerTotal));
-  L.push('Чистые поступления: ' + fmt(s.netProceeds));
-  L.push('Минус изначально вложено: − ' + fmt(s.paidAmount));
-  L.push('ЧИСТАЯ ПРИБЫЛЬ: ' + fmt(s.netProfit));
-  L.push('ROI за срок владения: ' + fmtPct(s.roi));
-  L.push('ROI аннуализированная: ' + fmtPct(s.roiAnn) + ' (' + s.holdingMonths.toLocaleString('ru-RU') + ' мес.)');
+  L.push('Чистая прибыль: ' + fmt(s.netProfit) + '  ·  ROI: ' + fmtPct(s.roi));
   return L.join('\n');
 }
 
@@ -806,17 +834,25 @@ async function renderCardPng(cardId){
   if (typeof html2canvas !== 'function') throw new Error('html2canvas');
   const node = el(cardId);
   const bg = getComputedStyle(document.body).backgroundColor;
-  const canvas = await html2canvas(node, {
-    backgroundColor: bg,
-    scale: Math.min(2, window.devicePixelRatio || 2),
-    ignoreElements: function(e){ return e.classList && e.classList.contains('no-export'); }
-  });
-  return await new Promise(function(resolve, reject){
-    canvas.toBlob(function(blob){
-      if (blob) resolve(blob);
-      else reject(new Error('blob'));
-    }, 'image/png');
-  });
+  node.classList.add('exporting');
+  try{
+    await new Promise(function(resolve){
+      requestAnimationFrame(function(){ requestAnimationFrame(resolve); });
+    });
+    const canvas = await html2canvas(node, {
+      backgroundColor: bg,
+      scale: Math.min(2, window.devicePixelRatio || 2),
+      ignoreElements: function(e){ return e.classList && e.classList.contains('no-export'); }
+    });
+    return await new Promise(function(resolve, reject){
+      canvas.toBlob(function(blob){
+        if (blob) resolve(blob);
+        else reject(new Error('blob'));
+      }, 'image/png');
+    });
+  } finally {
+    node.classList.remove('exporting');
+  }
 }
 
 async function downloadPng(cardId, filename, statusId){
