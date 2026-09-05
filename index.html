@@ -613,17 +613,9 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       <span class="payee-fixed">Комиссия + НДС</span>
       <span class="computed" id="im_commVat">—</span>
     </div>
-    <div class="ledger-row" id="row_im_sc" hidden>
-      <span class="payee-fixed">SC покупатель→продавец</span>
-      <span class="computed" id="im_sc">—</span>
-    </div>
-    <div class="ledger-row" id="row_im_rent" hidden>
-      <span class="payee-fixed">аренда продавец→покупатель</span>
-      <span class="computed" id="im_rent">—</span>
-    </div>
-    <div class="ledger-row" id="row_im_deposit" hidden>
-      <span class="payee-fixed">депозит → покупатель</span>
-      <span class="computed" id="im_deposit">—</span>
+    <div class="ledger-row" id="row_im_tenancy" hidden>
+      <span class="payee-fixed">возврат SC/rent</span>
+      <span class="computed" id="im_tenancy">—</span>
     </div>
     <div class="ledger-row total">
       <span class="label">ROI</span>
@@ -844,6 +836,7 @@ function recompute(){
   const sdExportAgency = sellerComm;
   const sdExportOther = sellerConvFee + lateFee;
 
+  const tenancyNet = prepaidSc - prepaidRent - securityDeposit;
   const receivedFromBuyer = toSeller + prepaidSc;
   const netProceeds = receivedFromBuyer - sellerTotal;
   const netProfit = netProceeds - paidAmount;
@@ -862,7 +855,7 @@ function recompute(){
     hasMortgage, loanLtvPct, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
     sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerFeeTotal, sellerTotal, sellerCostsPct,
     sdDev, sdAgency, sdTotal, sdExportDev, sdExportAgency, sdExportOther,
-    receivedFromBuyer, netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
+    tenancyNet, receivedFromBuyer, netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
   };
 
   el('propTitle').textContent = propName;
@@ -904,12 +897,8 @@ function recompute(){
   setText('im_netToSeller', fmt(netProceeds));
   setText('im_nocAssign', fmt(sdExportDev));
   setText('im_commVat', fmt(sellerComm));
-  el('row_im_sc').hidden = prepaidSc <= 0;
-  setText('im_sc', fmt(prepaidSc));
-  el('row_im_rent').hidden = prepaidRent <= 0;
-  setText('im_rent', '− ' + fmt(prepaidRent));
-  el('row_im_deposit').hidden = securityDeposit <= 0;
-  setText('im_deposit', '− ' + fmt(securityDeposit));
+  el('row_im_tenancy').hidden = tenancyNet === 0;
+  setText('im_tenancy', fmt(tenancyNet));
   setText('im_roi', fmtPct(roi));
   el('im_netToSeller').style.color = netProceeds < 0 ? 'var(--cost)' : 'var(--profit)';
   el('im_roi').style.color = roi < 0 ? 'var(--cost)' : 'var(--profit)';
@@ -1143,9 +1132,7 @@ function buildBuyerText(){
   L.push('Кому и сколько:');
   L.push('Остаток по рассрочке — ' + s.propName + ': ' + fmt(s.bdDev));
   L.push('Продавцу: ' + fmt(s.bdSeller));
-  if (s.prepaidSc > 0) L.push('SC buyer→seller: ' + fmt(s.prepaidSc));
-  if (s.prepaidRent > 0) L.push('rent seller→buyer: ' + fmt(s.prepaidRent));
-  if (s.securityDeposit > 0) L.push('deposit → buyer: ' + fmt(s.securityDeposit));
+  if (s.tenancyNet) L.push('возврат SC/rent: ' + fmt(s.tenancyNet));
   L.push('Госсборы (DLD + Trustee + Title Deed): ' + fmt(s.bdDld));
   L.push('Комиссия агентства: ' + fmt(s.bdAgency));
   if (s.hasMortgage) L.push('Ипотека (банк + DLD): ' + fmt(s.bdBank));
@@ -1166,9 +1153,7 @@ function buildSellerText(){
   L.push('NOC и сборы застройщика: ' + fmt(s.sdExportDev));
   L.push('Агентская комиссия: ' + fmt(s.sdExportAgency));
   if (s.sdExportOther) L.push('Прочее: ' + fmt(s.sdExportOther));
-  if (s.prepaidSc > 0) L.push('SC buyer→seller: ' + fmt(s.prepaidSc));
-  if (s.prepaidRent > 0) L.push('rent seller→buyer: ' + fmt(s.prepaidRent));
-  if (s.securityDeposit > 0) L.push('deposit → buyer: ' + fmt(s.securityDeposit));
+  if (s.tenancyNet) L.push('возврат SC/rent: ' + fmt(s.tenancyNet));
   L.push('');
   L.push('Чистая прибыль: ' + fmt(s.netProfit) + '  ·  ROI: ' + fmtPct(s.roi));
   return L.join('\n');
