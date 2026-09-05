@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Реестр переуступки</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
@@ -53,6 +58,16 @@ body{
 }
 .reset-btn:hover{border-color:var(--accent); color:var(--accent);}
 .reset-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.mast-actions{display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.wa-cta{
+  display:inline-flex; align-items:center; justify-content:center;
+  border:1px solid var(--accent); background:var(--accent); color:var(--accent-ink);
+  font-family:inherit; font-size:12.5px; padding:8px 14px; border-radius:8px;
+  text-decoration:none; cursor:pointer; white-space:nowrap;
+  transition:filter .15s;
+}
+.wa-cta:hover{filter:brightness(1.06);}
+.wa-cta:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 
 .fixnote{
   margin:18px 0 28px; padding:12px 16px; border-radius:10px;
@@ -155,19 +170,24 @@ body{
 .export-btn:hover{border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
 .export-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 .export-btn:disabled{opacity:.5; cursor:not-allowed;}
+.export-btn.primary{border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
 .export-status{font-size:11px; color:var(--ink-faint); width:100%; min-height:14px;}
 
 footer{margin-top:20px; color:var(--ink-faint); font-size:11.5px; line-height:1.7;}
 footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <div class="masthead">
     <div>
       <h1 id="propTitle">Sunrise Bay T2 — 501</h1>
       <span class="tag">Реестр переуступки офф-плана</span>
     </div>
-    <button class="reset-btn" id="resetBtn">Сбросить к примеру</button>
+    <div class="mast-actions">
+      <a class="wa-cta" id="waCta" href="https://wa.me/971585668337" target="_blank" rel="noopener noreferrer">WhatsApp: разбор юнита</a>
+      <button class="reset-btn" id="resetBtn">Сбросить к примеру</button>
+    </div>
   </div>
 
   <div class="fixnote">
@@ -326,8 +346,9 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       <p class="row-caption">«Продавцу» — цена объекта минус остаток по рассрочке: покупатель довносит остаток напрямую застройщику, а разницу отдаёт продавцу.</p>
 
       <div class="export-row no-export">
-        <button class="export-btn" id="buyerExportPngBtn">Скачать как изображение</button>
-        <button class="export-btn" id="buyerExportTxtBtn">Скачать как текст</button>
+        <button class="export-btn primary" id="buyerShareBtn">Поделиться карточкой</button>
+        <button class="export-btn" id="buyerExportPngBtn">Скачать изображение</button>
+        <button class="export-btn" id="buyerExportTxtBtn">Скачать / скопировать текст</button>
         <span class="export-status" id="buyerExportStatus"></span>
       </div>
     </div>
@@ -433,8 +454,9 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       </div>
 
       <div class="export-row no-export">
-        <button class="export-btn" id="sellerExportPngBtn">Скачать как изображение</button>
-        <button class="export-btn" id="sellerExportTxtBtn">Скачать как текст</button>
+        <button class="export-btn primary" id="sellerShareBtn">Поделиться карточкой</button>
+        <button class="export-btn" id="sellerExportPngBtn">Скачать изображение</button>
+        <button class="export-btn" id="sellerExportTxtBtn">Скачать / скопировать текст</button>
         <span class="export-status" id="sellerExportStatus"></span>
       </div>
     </div>
@@ -443,12 +465,15 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
   <footer>
     Совокупные издержки на сделку (обе стороны, без учёта самой цены объекта, без ипотечных расходов): <span class="bench" id="f_combinedPct">—</span> от цены объекта — по рынку такие сделки обычно укладываются в 6–11%.<br>
     Аннуализация ROI линейная (ROI × 12 / срок в месяцах), а не сложная (CAGR) — ориентир, не точный годовой процент.
-    Ставки — примерные умолчания для Дубая: DLD 4% с покупателя; trustee-офис ~2 100 AED до 500k / ~4 200 AED от 500k вкл. НДС; NOC 500–5 250 AED; Assignment Fee у части застройщиков 2–5% от первоначальной цены; ипотека — комиссия банка 0,5–1%, оценка 2 500–3 500 AED, регистрация в DLD 0,25% + 290 AED, страхование 1 500–4 000 AED/год. Перед сделкой сверяйте актуальные тарифы с trustee-офисом, застройщиком и банком.
+    Ставки — примерные умолчания для Дубая: DLD 4% с покупателя; trustee-офис ~2 100 AED до 500k / ~4 200 AED от 500k вкл. НДС; NOC 500–5 250 AED; Assignment Fee у части застройщиков 2–5% от первоначальной цены; ипотека — комиссия банка 0,5–1%, оценка 2 500–3 500 AED, регистрация в DLD 0,25% + 290 AED, страхование 1 500–4 000 AED/год. Перед сделкой сверяйте актуальные тарифы с trustee-офисом, застройщиком и банком.<br>
+    <a class="wa-cta" id="waCtaFooter" href="https://wa.me/971585668337" target="_blank" rel="noopener noreferrer" style="margin-top:14px; display:inline-flex;">WhatsApp: разбор / карточка под юнит</a>
   </footer>
 </div>
 
 <script>
 const VAT_PCT = 5;
+const WA_NUMBER = '971585668337';
+const WA_PITCH = 'Здравствуйте! Нужен разбор / карточка под ваш юнит. 2-min off-plan assignment calc: кто платит DLD / NOC / комиссию, какой остаток у продавца.';
 
 const DEFAULTS = {
   propName:"Sunrise Bay T2 — 501", dealPrice:1195000, originalPrice:1011676, paidPct:40,
@@ -606,6 +631,21 @@ function recompute(){
   roiTile.className = 'v ' + (roi < 0 ? 'cost' : 'profit');
   setText('tileRoiAnn', 'аннуализ. ' + fmtPct(roiAnn));
   setText('tileCommission', fmt(totalComm));
+  updateWhatsAppLinks();
+}
+
+function buildWhatsAppUrl(){
+  const unit = (el('propName') && el('propName').value.trim()) || 'юнит';
+  const text = WA_PITCH + '\n\nЮнит: ' + unit + '\nhttps://evgheni34-hash.github.io/offplan-assignment-ledger';
+  return 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(text);
+}
+
+function updateWhatsAppLinks(){
+  const href = buildWhatsAppUrl();
+  const top = el('waCta');
+  const foot = el('waCtaFooter');
+  if (top) top.href = href;
+  if (foot) foot.href = href;
 }
 
 function applyDefaults(){
@@ -695,63 +735,168 @@ function slug(str){
   return (str || 'deal').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'deal';
 }
 
-/* ---- export: capability wiring ---- */
-let downloadsNs = null;
-(async function initCaps(){
-  try{
-    if (window.claude && typeof window.claude.use === 'function') {
-      downloadsNs = await window.claude.use('downloads');
-    }
-  } catch(e){ downloadsNs = null; }
-})();
-
-async function saveFile(filename, data, statusId){
+/* ---- export: browser download + mobile share ---- */
+function setStatus(statusId, text){
   const statusEl = el(statusId);
-  if (!downloadsNs) {
-    if (statusEl) statusEl.textContent = 'Скачивание недоступно в этом окне.';
-    return;
-  }
+  if (statusEl) statusEl.textContent = text || '';
+}
+
+function triggerDownload(filename, blob){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+}
+
+function toBlob(data, mime){
+  if (data instanceof Blob) return data;
+  return new Blob([data], { type: mime || 'text/plain;charset=utf-8' });
+}
+
+async function copyText(text){
   try{
-    await downloadsNs.save({ filename, data });
-    if (statusEl) statusEl.textContent = 'Сохранено: ' + filename;
-  } catch(e){
-    if (statusEl) {
-      if (e && e.code === 'declined') statusEl.textContent = 'Сохранение отменено.';
-      else statusEl.textContent = 'Не удалось сохранить файл.';
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(text);
+      return true;
     }
+  } catch(e){}
+  try{
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    return ok;
+  } catch(e){
+    return false;
   }
 }
 
-async function exportCardPng(cardId, filename, statusId){
-  const statusEl = el(statusId);
-  if (typeof html2canvas !== 'function') {
-    if (statusEl) statusEl.textContent = 'Модуль экспорта не загрузился.';
-    return;
+async function sharePayload(opts){
+  if (!navigator.share) return false;
+  const payload = { title: opts.title, text: opts.text };
+  if (opts.file && navigator.canShare) {
+    try{
+      if (navigator.canShare({ files: [opts.file] })) payload.files = [opts.file];
+    } catch(e){}
   }
+  try{
+    if (navigator.canShare && !navigator.canShare(payload)) {
+      delete payload.files;
+      if (!navigator.canShare(payload)) return false;
+    }
+    await navigator.share(payload);
+    return true;
+  } catch(e){
+    if (e && e.name === 'AbortError') return 'aborted';
+    return false;
+  }
+}
+
+async function renderCardPng(cardId){
+  if (typeof html2canvas !== 'function') throw new Error('html2canvas');
   const node = el(cardId);
   const bg = getComputedStyle(document.body).backgroundColor;
   const canvas = await html2canvas(node, {
     backgroundColor: bg,
-    scale: 2,
+    scale: Math.min(2, window.devicePixelRatio || 2),
     ignoreElements: function(e){ return e.classList && e.classList.contains('no-export'); }
   });
-  canvas.toBlob(function(blob){
-    saveFile(filename, blob, statusId);
-  }, 'image/png');
+  return await new Promise(function(resolve, reject){
+    canvas.toBlob(function(blob){
+      if (blob) resolve(blob);
+      else reject(new Error('blob'));
+    }, 'image/png');
+  });
 }
 
+async function downloadPng(cardId, filename, statusId){
+  setStatus(statusId, 'Готовим изображение…');
+  try{
+    const blob = await renderCardPng(cardId);
+    triggerDownload(filename, blob);
+    setStatus(statusId, 'Скачано: ' + filename);
+  } catch(e){
+    setStatus(statusId, 'Не удалось сохранить изображение.');
+  }
+}
+
+async function downloadOrCopyText(filename, text, statusId){
+  const copied = await copyText(text);
+  triggerDownload(filename, toBlob(text, 'text/plain;charset=utf-8'));
+  setStatus(statusId, copied
+    ? 'Текст скопирован и скачан: ' + filename
+    : 'Скачано: ' + filename);
+}
+
+async function shareCard(cardId, filename, text, title, statusId){
+  setStatus(statusId, 'Готовим карточку…');
+  try{
+    const blob = await renderCardPng(cardId);
+    const file = new File([blob], filename, { type: 'image/png' });
+    const shared = await sharePayload({ title: title, text: text, file: file });
+    if (shared === true) {
+      setStatus(statusId, 'Карточка отправлена в чат.');
+      return;
+    }
+    if (shared === 'aborted') {
+      setStatus(statusId, 'Отправка отменена.');
+      return;
+    }
+    triggerDownload(filename, blob);
+    const copied = await copyText(text);
+    setStatus(statusId, copied
+      ? 'Share недоступен — изображение скачано, текст скопирован. Вставьте в WhatsApp.'
+      : 'Share недоступен — изображение скачано: ' + filename);
+  } catch(e){
+    const copied = await copyText(text);
+    setStatus(statusId, copied
+      ? 'Не удалось собрать картинку. Текст карточки скопирован — вставьте в чат.'
+      : 'Не удалось поделиться карточкой.');
+  }
+}
+
+el('buyerShareBtn').addEventListener('click', function(){
+  shareCard(
+    'buyerCard',
+    'buyer-obligations-' + slug(STATE.propName) + '.png',
+    buildBuyerText(),
+    STATE.propName + ' — обязательства покупателя',
+    'buyerExportStatus'
+  );
+});
 el('buyerExportPngBtn').addEventListener('click', function(){
-  exportCardPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
+  downloadPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
 });
 el('buyerExportTxtBtn').addEventListener('click', function(){
-  saveFile('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
+  downloadOrCopyText('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
+});
+el('sellerShareBtn').addEventListener('click', function(){
+  shareCard(
+    'sellerCard',
+    'seller-obligations-' + slug(STATE.propName) + '.png',
+    buildSellerText(),
+    STATE.propName + ' — обязательства продавца',
+    'sellerExportStatus'
+  );
 });
 el('sellerExportPngBtn').addEventListener('click', function(){
-  exportCardPng('sellerCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
+  downloadPng('sellerCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
 });
 el('sellerExportTxtBtn').addEventListener('click', function(){
-  saveFile('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
+  downloadOrCopyText('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
 });
 
 recompute();
 </script>
+</body>
+</html>
