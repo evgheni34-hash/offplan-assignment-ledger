@@ -176,9 +176,65 @@ body{
 .card.exporting .export-only{display:block;}
 .card.exporting .export-only [hidden]{display:none !important;}
 .card.exporting .no-export{display:none !important;}
+.export-hint{font-size:11.5px; color:var(--ink-faint); width:100%; margin:0 0 4px;}
 #sellerShareCard{
   position:absolute; left:-9999px; top:0; width:380px; margin:0;
 }
+
+.paywall{
+  position:fixed; inset:0; z-index:50;
+  background:rgba(18,21,26,.48);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px;
+}
+.paywall[hidden]{display:none !important;}
+.paywall-card{
+  width:min(440px,100%);
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-radius:14px;
+  box-shadow:var(--shadow);
+  padding:22px 24px 20px;
+  position:relative;
+}
+.paywall-card[dir="rtl"]{text-align:right;}
+.paywall-close{
+  position:absolute; top:10px; inset-inline-end:12px;
+  border:none; background:transparent; color:var(--ink-faint);
+  font-size:22px; line-height:1; cursor:pointer; padding:4px 6px;
+}
+.paywall-close:hover{color:var(--ink);}
+.paywall-close:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.paywall-langs{display:flex; gap:6px; margin:0 0 14px; flex-wrap:wrap;}
+.paywall-lang{
+  border:1px solid var(--rule-strong); background:var(--surface-2); color:var(--ink-soft);
+  font-family:inherit; font-size:11.5px; padding:4px 9px; border-radius:6px; cursor:pointer;
+}
+.paywall-lang[aria-pressed="true"]{
+  border-color:var(--accent); background:var(--accent-soft); color:var(--accent);
+}
+.paywall-lang:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+.paywall-card h2{
+  font-family:"Fraunces",serif; font-weight:600; font-size:22px;
+  margin:0 0 8px; letter-spacing:-0.01em;
+}
+.paywall-card .lead{color:var(--ink-soft); font-size:13px; margin:0 0 12px; line-height:1.55;}
+.paywall-card ul{margin:0 0 16px; padding-inline-start:1.15em; color:var(--ink-soft); font-size:12.5px;}
+.paywall-card li{margin:5px 0;}
+.paywall-card li b{color:var(--ink); font-weight:600;}
+.paywall-wa{width:100%; margin-bottom:16px; min-height:40px;}
+.paywall-code label{display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;}
+.paywall-code-row{display:flex; gap:8px;}
+.paywall-code-row input{
+  flex:1; min-width:0; font-family:"IBM Plex Mono",monospace; font-size:13.5px;
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:7px;
+  padding:8px 10px; color:var(--ink);
+}
+.paywall-code-row input:focus-visible{outline:none; border-color:var(--accent); background:var(--surface);}
+.paywall-code-row .export-btn{flex:0 0 auto; min-width:0; margin:0;}
+.paywall-code-status{font-size:11.5px; color:var(--ink-faint); min-height:16px; margin:8px 0 0;}
+.paywall-code-status.ok{color:var(--profit);}
+.paywall-code-status.bad{color:var(--cost);}
 
 footer{margin-top:20px; color:var(--ink-faint); font-size:11.5px; line-height:1.7;}
 footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
@@ -353,6 +409,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       <p class="row-caption">«Продавцу» — цена объекта минус остаток по рассрочке: покупатель довносит остаток напрямую застройщику, а разницу отдаёт продавцу.</p>
 
       <div class="export-row no-export">
+        <p class="export-hint" id="buyerExportHint"></p>
         <button class="export-btn primary" id="buyerShareBtn">Поделиться карточкой</button>
         <button class="export-btn" id="buyerExportPngBtn">Скачать изображение</button>
         <button class="export-btn" id="buyerExportTxtBtn">Скачать / скопировать текст</button>
@@ -467,6 +524,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       </div>
 
       <div class="export-row no-export">
+        <p class="export-hint" id="sellerExportHint"></p>
         <button class="export-btn primary" id="sellerShareBtn">Поделиться карточкой</button>
         <button class="export-btn" id="sellerExportPngBtn">Скачать изображение</button>
         <button class="export-btn" id="sellerExportTxtBtn">Скачать / скопировать текст</button>
@@ -502,10 +560,104 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
   </footer>
 </div>
 
+<div class="paywall" id="paywall" hidden>
+  <div class="paywall-card" id="paywallCard" role="dialog" aria-modal="true" aria-labelledby="paywallTitle">
+    <button type="button" class="paywall-close" id="paywallClose" aria-label="Close">&times;</button>
+    <div class="paywall-langs" role="group" aria-label="Language">
+      <button type="button" class="paywall-lang" data-lang="ru" aria-pressed="true">RU</button>
+      <button type="button" class="paywall-lang" data-lang="en" aria-pressed="false">EN</button>
+      <button type="button" class="paywall-lang" data-lang="ar" aria-pressed="false">AR</button>
+    </div>
+    <h2 id="paywallTitle"></h2>
+    <p class="lead" id="paywallLead"></p>
+    <ul id="paywallPoints"></ul>
+    <a class="wa-cta paywall-wa" id="paywallWa" href="https://wa.me/971585668337" target="_blank" rel="noopener noreferrer"></a>
+    <div class="paywall-code">
+      <label for="unlockCode" id="paywallCodeLabel"></label>
+      <div class="paywall-code-row">
+        <input type="text" id="unlockCode" autocomplete="off" spellcheck="false" maxlength="32">
+        <button type="button" class="export-btn primary" id="unlockBtn"></button>
+      </div>
+      <p class="paywall-code-status" id="paywallCodeStatus"></p>
+    </div>
+  </div>
+</div>
+
 <script>
 const VAT_PCT = 5;
 const WA_NUMBER = '971585668337';
 const WA_PITCH = 'Здравствуйте! Нужен разбор / карточка под ваш юнит. 2-min off-plan assignment calc: кто платит DLD / NOC / комиссию, какой остаток у продавца.';
+const FREE_EXPORTS = 2;
+const UNLOCK_CODE = 'UNLOCK49';
+const LS_UNLOCKED = 'unlocked';
+const LS_EXPORT_COUNT = 'exportCount';
+const LS_PAYWALL_LANG = 'paywallLang';
+
+const PAYWALL_I18N = {
+  ru: {
+    dir: 'ltr',
+    title: 'Unlock export forever — AED 49',
+    lead: 'Калькулятор остаётся бесплатным. После двух коротких карточек шаринг и скачивание — разово, навсегда. Без подписки.',
+    points: [
+      '<b>Считать сделку</b> — всегда бесплатно',
+      '<b>2 карточки</b> в этом браузере — бесплатно',
+      'Дальше: один unlock, <b>AED 49</b>'
+    ],
+    wa: 'WhatsApp · unlock AED 49',
+    waText: 'Хочу unlock калькулятора переуступки — 49 AED',
+    codeLabel: 'Есть код разблокировки',
+    codePh: 'Код',
+    codeBtn: 'Открыть',
+    codeOk: 'Unlock активен — шаринг снова доступен.',
+    codeBad: 'Код не подошёл. Напишите в WhatsApp — вышлем код после оплаты AED 49.',
+    close: 'Закрыть',
+    hintLeft: 'Бесплатных карточек осталось: {n}',
+    hintLast: 'Последняя бесплатная карточка в этом браузере',
+    hintLocked: 'Дальше нужен unlock — AED 49'
+  },
+  en: {
+    dir: 'ltr',
+    title: 'Unlock export forever — AED 49',
+    lead: 'The calculator stays free. After two short share cards, further export is a one-time unlock. No subscription.',
+    points: [
+      '<b>Deal math</b> is always free',
+      '<b>2 cards</b> in this browser are free',
+      'After that: one unlock, <b>AED 49</b>'
+    ],
+    wa: 'WhatsApp · unlock AED 49',
+    waText: 'I want to unlock the assignment calculator — 49 AED',
+    codeLabel: 'Have an unlock code',
+    codePh: 'Code',
+    codeBtn: 'Unlock',
+    codeOk: 'Unlock is on — sharing is available again.',
+    codeBad: 'That code did not work. Message on WhatsApp — we will send the code after 49 AED.',
+    close: 'Close',
+    hintLeft: 'Free cards left: {n}',
+    hintLast: 'Last free card in this browser',
+    hintLocked: 'Further export needs unlock — 49 AED'
+  },
+  ar: {
+    dir: 'rtl',
+    title: 'فتح دائم — 49 درهم',
+    lead: 'الآلة الحاسبة مجانية دائماً. بعد بطاقتين قصيرتين، المشاركة والتحميل تحتاج فتحاً لمرة واحدة. بدون اشتراك.',
+    points: [
+      '<b>حساب الصفقة</b> مجاني دائماً',
+      '<b>بطاقتان</b> مجاناً في هذا المتصفح',
+      'بعدها: فتح واحد بـ <b>49 درهم</b>'
+    ],
+    wa: 'واتساب · فتح 49 درهم',
+    waText: 'أريد فتح آلة حاسبة التنازل — 49 درهم',
+    codeLabel: 'يوجد رمز فتح',
+    codePh: 'الرمز',
+    codeBtn: 'فتح',
+    codeOk: 'تم الفتح — المشاركة متاحة.',
+    codeBad: 'الرمز غير صحيح. راسلونا على واتساب بعد دفع 49 درهم.',
+    close: 'إغلاق',
+    hintLeft: 'بطاقات مجانية متبقية: {n}',
+    hintLast: 'آخر بطاقة مجانية في هذا المتصفح',
+    hintLocked: 'للمزيد تحتاجون فتحاً — 49 درهم'
+  }
+};
 
 const DEFAULTS = {
   propName:"Sunrise Bay T2 — 501", dealPrice:1195000, originalPrice:1011676, paidPct:40,
@@ -690,6 +842,136 @@ function updateWhatsAppLinks(){
   if (foot) foot.href = href;
 }
 
+/* ---- one-time unlock (49 AED) ---- */
+let pendingExport = null;
+let paywallLang = 'ru';
+
+function detectPaywallLang(){
+  try{
+    const saved = localStorage.getItem(LS_PAYWALL_LANG);
+    if (saved && PAYWALL_I18N[saved]) return saved;
+  } catch(e){}
+  return 'ru';
+}
+
+function isUnlocked(){
+  try{ return localStorage.getItem(LS_UNLOCKED) === 'true'; } catch(e){ return false; }
+}
+
+function getExportCount(){
+  try{
+    const n = parseInt(localStorage.getItem(LS_EXPORT_COUNT) || '0', 10);
+    return isFinite(n) && n > 0 ? n : 0;
+  } catch(e){ return 0; }
+}
+
+function canExport(){
+  return isUnlocked() || getExportCount() < FREE_EXPORTS;
+}
+
+function markExportSuccess(){
+  if (isUnlocked()) return;
+  try{ localStorage.setItem(LS_EXPORT_COUNT, String(getExportCount() + 1)); } catch(e){}
+  updateExportHints();
+}
+
+function tPaywall(){
+  return PAYWALL_I18N[paywallLang] || PAYWALL_I18N.ru;
+}
+
+function buildUnlockWhatsAppUrl(){
+  return 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(tPaywall().waText);
+}
+
+function applyPaywallLang(lang){
+  if (!PAYWALL_I18N[lang]) lang = 'ru';
+  paywallLang = lang;
+  try{ localStorage.setItem(LS_PAYWALL_LANG, lang); } catch(e){}
+  const t = tPaywall();
+  const card = el('paywallCard');
+  card.dir = t.dir;
+  card.lang = lang;
+  setText('paywallTitle', t.title);
+  setText('paywallLead', t.lead);
+  el('paywallPoints').innerHTML = t.points.map(function(p){ return '<li>' + p + '</li>'; }).join('');
+  const wa = el('paywallWa');
+  wa.textContent = t.wa;
+  wa.href = buildUnlockWhatsAppUrl();
+  setText('paywallCodeLabel', t.codeLabel);
+  el('unlockCode').placeholder = t.codePh;
+  el('unlockBtn').textContent = t.codeBtn;
+  el('paywallClose').setAttribute('aria-label', t.close);
+  document.querySelectorAll('.paywall-lang').forEach(function(btn){
+    btn.setAttribute('aria-pressed', btn.getAttribute('data-lang') === lang ? 'true' : 'false');
+  });
+  updateExportHints();
+}
+
+function hintText(){
+  if (isUnlocked()) return '';
+  const t = tPaywall();
+  const left = FREE_EXPORTS - getExportCount();
+  if (left <= 0) return t.hintLocked;
+  if (left === 1) return t.hintLast;
+  return t.hintLeft.replace('{n}', String(left));
+}
+
+function updateExportHints(){
+  const text = hintText();
+  ['buyerExportHint', 'sellerExportHint'].forEach(function(id){
+    const node = el(id);
+    if (node) node.textContent = text;
+  });
+}
+
+function showPaywall(){
+  if (isUnlocked()) return;
+  applyPaywallLang(paywallLang);
+  const status = el('paywallCodeStatus');
+  status.textContent = '';
+  status.className = 'paywall-code-status';
+  el('unlockCode').value = '';
+  el('paywall').hidden = false;
+  el('unlockCode').focus();
+}
+
+function hidePaywall(){
+  el('paywall').hidden = true;
+  pendingExport = null;
+}
+
+function persistUnlock(){
+  try{ localStorage.setItem(LS_UNLOCKED, 'true'); } catch(e){}
+}
+
+function tryUnlockCode(){
+  const raw = (el('unlockCode').value || '').replace(/\s+/g, '').toUpperCase();
+  const status = el('paywallCodeStatus');
+  const t = tPaywall();
+  if (raw === UNLOCK_CODE) {
+    persistUnlock();
+    status.textContent = t.codeOk;
+    status.className = 'paywall-code-status ok';
+    updateExportHints();
+    const resume = pendingExport;
+    pendingExport = null;
+    el('paywall').hidden = true;
+    if (resume) resume();
+    return;
+  }
+  status.textContent = t.codeBad;
+  status.className = 'paywall-code-status bad';
+}
+
+function guardExport(fn){
+  if (isUnlocked() || canExport()) {
+    fn();
+    return;
+  }
+  pendingExport = fn;
+  showPaywall();
+}
+
 function applyDefaults(){
   el('propName').value = DEFAULTS.propName;
   el('dealPrice').value = DEFAULTS.dealPrice;
@@ -869,6 +1151,7 @@ async function downloadPng(cardId, filename, statusId){
   try{
     const blob = await renderCardPng(cardId);
     triggerDownload(filename, blob);
+    markExportSuccess();
     setStatus(statusId, 'Скачано: ' + filename);
   } catch(e){
     setStatus(statusId, 'Не удалось сохранить изображение.');
@@ -878,6 +1161,7 @@ async function downloadPng(cardId, filename, statusId){
 async function downloadOrCopyText(filename, text, statusId){
   const copied = await copyText(text);
   triggerDownload(filename, toBlob(text, 'text/plain;charset=utf-8'));
+  markExportSuccess();
   setStatus(statusId, copied
     ? 'Текст скопирован и скачан: ' + filename
     : 'Скачано: ' + filename);
@@ -890,6 +1174,7 @@ async function shareCard(cardId, filename, text, title, statusId){
     const file = new File([blob], filename, { type: 'image/png' });
     const shared = await sharePayload({ title: title, text: text, file: file });
     if (shared === true) {
+      markExportSuccess();
       setStatus(statusId, 'Карточка отправлена в чат.');
       return;
     }
@@ -899,11 +1184,13 @@ async function shareCard(cardId, filename, text, title, statusId){
     }
     triggerDownload(filename, blob);
     const copied = await copyText(text);
+    markExportSuccess();
     setStatus(statusId, copied
       ? 'Share недоступен — изображение скачано, текст скопирован. Вставьте в WhatsApp.'
       : 'Share недоступен — изображение скачано: ' + filename);
   } catch(e){
     const copied = await copyText(text);
+    if (copied) markExportSuccess();
     setStatus(statusId, copied
       ? 'Не удалось собрать картинку. Текст карточки скопирован — вставьте в чат.'
       : 'Не удалось поделиться карточкой.');
@@ -911,36 +1198,68 @@ async function shareCard(cardId, filename, text, title, statusId){
 }
 
 el('buyerShareBtn').addEventListener('click', function(){
-  shareCard(
-    'buyerCard',
-    'buyer-obligations-' + slug(STATE.propName) + '.png',
-    buildBuyerText(),
-    STATE.propName + ' — обязательства покупателя',
-    'buyerExportStatus'
-  );
+  guardExport(function(){
+    shareCard(
+      'buyerCard',
+      'buyer-obligations-' + slug(STATE.propName) + '.png',
+      buildBuyerText(),
+      STATE.propName + ' — обязательства покупателя',
+      'buyerExportStatus'
+    );
+  });
 });
 el('buyerExportPngBtn').addEventListener('click', function(){
-  downloadPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
+  guardExport(function(){
+    downloadPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
+  });
 });
 el('buyerExportTxtBtn').addEventListener('click', function(){
-  downloadOrCopyText('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
+  guardExport(function(){
+    downloadOrCopyText('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
+  });
 });
 el('sellerShareBtn').addEventListener('click', function(){
-  shareCard(
-    'sellerShareCard',
-    'seller-obligations-' + slug(STATE.propName) + '.png',
-    buildSellerText(),
-    STATE.propName + ' — обязательства продавца',
-    'sellerExportStatus'
-  );
+  guardExport(function(){
+    shareCard(
+      'sellerShareCard',
+      'seller-obligations-' + slug(STATE.propName) + '.png',
+      buildSellerText(),
+      STATE.propName + ' — обязательства продавца',
+      'sellerExportStatus'
+    );
+  });
 });
 el('sellerExportPngBtn').addEventListener('click', function(){
-  downloadPng('sellerShareCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
+  guardExport(function(){
+    downloadPng('sellerShareCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
+  });
 });
 el('sellerExportTxtBtn').addEventListener('click', function(){
-  downloadOrCopyText('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
+  guardExport(function(){
+    downloadOrCopyText('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
+  });
 });
 
+document.querySelectorAll('.paywall-lang').forEach(function(btn){
+  btn.addEventListener('click', function(){ applyPaywallLang(btn.getAttribute('data-lang')); });
+});
+el('paywallClose').addEventListener('click', hidePaywall);
+el('paywall').addEventListener('click', function(e){
+  if (e.target === el('paywall')) hidePaywall();
+});
+el('unlockBtn').addEventListener('click', tryUnlockCode);
+el('unlockCode').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    tryUnlockCode();
+  }
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && !el('paywall').hidden) hidePaywall();
+});
+
+paywallLang = detectPaywallLang();
+applyPaywallLang(paywallLang);
 recompute();
 </script>
 </body>
