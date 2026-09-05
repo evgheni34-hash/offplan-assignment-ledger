@@ -302,6 +302,43 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <label for="holdingMonths">Срок владения, мес.</label>
         <input type="number" id="holdingMonths" value="18" step="1" min="1">
       </div>
+      <div class="field">
+        <label for="scRefund">Возврат prepaid SC</label>
+        <input type="number" id="scRefund" value="0" step="1" min="0">
+        <span class="hint">неиспользованный остаток сервисных сборов — покупатель возмещает продавцу</span>
+      </div>
+    </div>
+
+    <div class="subhead">Аренда (если объект сдан)</div>
+    <div class="ledger-row">
+      <span class="label">Объект в аренде</span>
+      <label class="switch">
+        <input type="checkbox" id="isRented">
+        <span class="track"></span>
+        <span id="rentedStateLabel">Нет</span>
+      </label>
+    </div>
+    <div id="rentFields" hidden>
+      <p class="row-caption">Покупатель возмещает продавцу неиспользованную предоплаченную аренду: годовая аренда × (оставшиеся месяцы / 12 + дни / 365).</p>
+      <div class="params-grid" style="margin-top:12px;">
+        <div class="field">
+          <label for="annualRent">Годовая аренда</label>
+          <input type="number" id="annualRent" value="0" step="1" min="0">
+        </div>
+        <div class="field">
+          <label for="rentMonthsLeft">Осталось месяцев</label>
+          <input type="number" id="rentMonthsLeft" value="0" step="1" min="0">
+        </div>
+        <div class="field">
+          <label for="rentDaysLeft">Осталось дней</label>
+          <input type="number" id="rentDaysLeft" value="0" step="1" min="0">
+          <span class="hint">сверх полных месяцев</span>
+        </div>
+      </div>
+      <div class="ledger-row" style="margin-top:4px;">
+        <span class="label">Возврат аренды продавцу (расчёт)</span>
+        <span class="computed" id="r_rentRefund">—</span>
+      </div>
     </div>
 
     <div class="subhead">Ставки и сборы покупателя</div>
@@ -342,8 +379,9 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       <p class="row-caption">Ипотека на переуступку до сдачи объекта в Дубае доступна ограниченно: чаще банк финансирует только финальный платёж застройщику при хендовере, а не выкуп доли у текущего собственника. Уточняйте у банка или ипотечного брокера, что именно можно профинансировать в конкретной сделке.</p>
       <div class="params-grid" style="margin-top:12px;">
         <div class="field">
-          <label for="loanAmount">Сумма кредита</label>
-          <input type="number" id="loanAmount" value="0" step="1">
+          <label for="loanLtvPct">LTV кредита</label>
+          <div class="unitwrap"><input type="number" id="loanLtvPct" value="50" step="1" min="0"><span class="unit">%</span></div>
+          <span class="hint">доля кредита от цены сделки; сумма считается автоматически</span>
         </div>
         <div class="field">
           <label for="bankFeePct">Комиссия банка</label>
@@ -368,6 +406,10 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         </div>
       </div>
       <div class="ledger-row" style="margin-top:4px;">
+        <span class="label">Сумма кредита (от цены сделки)</span>
+        <span class="computed" id="r_loanAmount">—</span>
+      </div>
+      <div class="ledger-row">
         <span class="label">Итого расходы на ипотеку (разово)</span>
         <span class="computed" id="r_mortgageTotal">—</span>
       </div>
@@ -394,6 +436,14 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <span class="payee-fixed">Продавцу</span>
         <span class="computed" id="r_bd_seller">—</span>
       </div>
+      <div class="ledger-row" id="row_bd_sc" hidden>
+        <span class="payee-fixed">Возврат prepaid SC продавцу</span>
+        <span class="computed" id="r_bd_sc">—</span>
+      </div>
+      <div class="ledger-row" id="row_bd_rent" hidden>
+        <span class="payee-fixed">Возврат аренды продавцу</span>
+        <span class="computed" id="r_bd_rent">—</span>
+      </div>
       <div class="ledger-row">
         <span class="payee-fixed">Госсборы (DLD + Trustee + Title Deed)</span>
         <span class="computed" id="r_bd_dld">—</span>
@@ -406,7 +456,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <span class="payee-fixed">Ипотека (банк + DLD)</span>
         <span class="computed" id="r_bd_bank">—</span>
       </div>
-      <p class="row-caption">«Продавцу» — цена объекта минус остаток по рассрочке: покупатель довносит остаток напрямую застройщику, а разницу отдаёт продавцу.</p>
+      <p class="row-caption">«Продавцу» — цена объекта минус остаток по рассрочке: покупатель довносит остаток напрямую застройщику, а разницу отдаёт продавцу. Возврат prepaid SC и неиспользованной аренды — отдельно, тоже продавцу.</p>
 
       <div class="export-row no-export">
         <p class="export-hint" id="buyerExportHint"></p>
@@ -485,6 +535,14 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
               <span class="label">Получено от покупателя напрямую</span>
               <span class="computed" id="p_received">—</span>
             </div>
+            <div class="ledger-row" id="row_p_sc" hidden>
+              <span class="label">Плюс возврат prepaid SC</span>
+              <span class="computed" id="p_scRefund">—</span>
+            </div>
+            <div class="ledger-row" id="row_p_rent" hidden>
+              <span class="label">Плюс возврат аренды</span>
+              <span class="computed" id="p_rentRefund">—</span>
+            </div>
             <div class="ledger-row">
               <span class="label">Минус обязательства продавца</span>
               <span class="computed" id="p_minusObl">—</span>
@@ -545,6 +603,14 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
     <div class="ledger-row">
       <span class="payee-fixed">Комиссия + НДС</span>
       <span class="computed" id="im_commVat">—</span>
+    </div>
+    <div class="ledger-row" id="row_im_sc" hidden>
+      <span class="payee-fixed">Возврат SC</span>
+      <span class="computed" id="im_scRefund">—</span>
+    </div>
+    <div class="ledger-row" id="row_im_rent" hidden>
+      <span class="payee-fixed">Возврат аренды</span>
+      <span class="computed" id="im_rentRefund">—</span>
     </div>
     <div class="ledger-row total">
       <span class="label">ROI</span>
@@ -660,10 +726,11 @@ const PAYWALL_I18N = {
 
 const DEFAULTS = {
   propName:"Sunrise Bay T2 — 501", dealPrice:1195000, originalPrice:1011676, paidPct:40,
-  holdingMonths:18,
+  holdingMonths:18, scRefund:0,
+  isRented:false, annualRent:0, rentMonthsLeft:0, rentDaysLeft:0,
   dldPct:4, titleDeedFee:580, trusteeFee:4200, buyerCommPct:2, buyerConvFee:0,
   sellerCommPct:2, sellerConvFee:5250, lateFee:0, nocFee:5250, assignmentFeePct:0,
-  hasMortgage:false, loanAmount:0, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
+  hasMortgage:false, loanLtvPct:50, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
   dldMortgageFixed:290, insuranceYearly:2500
 };
 
@@ -705,13 +772,21 @@ function recompute(){
   const buyerComm = dealPrice * buyerCommPct / 100 * (1 + vatPct / 100);
   const buyerConvFee = num('buyerConvFee');
 
+  const scRefund = Math.max(num('scRefund'), 0);
+
+  const isRented = el('isRented').checked;
+  el('rentFields').hidden = !isRented;
+  el('rentedStateLabel').textContent = isRented ? 'Да' : 'Нет';
+  const annualRent = isRented ? Math.max(num('annualRent'), 0) : 0;
+  const rentMonthsLeft = isRented ? Math.max(num('rentMonthsLeft'), 0) : 0;
+  const rentDaysLeft = isRented ? Math.max(num('rentDaysLeft'), 0) : 0;
+  const rentRefund = isRented ? annualRent * (rentMonthsLeft / 12 + rentDaysLeft / 365) : 0;
+
   const hasMortgage = el('hasMortgage').checked;
   el('mortgageFields').hidden = !hasMortgage;
   el('mortgageStateLabel').textContent = hasMortgage ? 'Да' : 'Нет';
-  if (hasMortgage && num('loanAmount') === 0 && remainToDev > 0) {
-    el('loanAmount').value = Math.round(remainToDev);
-  }
-  const loanAmount = hasMortgage ? num('loanAmount') : 0;
+  const loanLtvPct = hasMortgage ? Math.max(num('loanLtvPct'), 0) : 0;
+  const loanAmount = hasMortgage ? dealPrice * loanLtvPct / 100 : 0;
   const bankFeePct = num('bankFeePct');
   const bankFee = loanAmount * bankFeePct / 100;
   const valuationFee = num('valuationFee');
@@ -722,16 +797,18 @@ function recompute(){
   const mortgageTotal = hasMortgage ? (bankFee + valuationFee + dldMortgageFee) : 0;
   const insuranceYearly = num('insuranceYearly');
 
-  const buyerTotal = dealPrice + dldFee + titleDeedFee + trusteeFee + buyerComm + buyerConvFee + mortgageTotal;
+  const buyerTotal = dealPrice + dldFee + titleDeedFee + trusteeFee + buyerComm + buyerConvFee + mortgageTotal + scRefund + rentRefund;
   const buyerCostsOnly = buyerTotal - dealPrice;
   const buyerCostsPct = dealPrice !== 0 ? buyerCostsOnly / dealPrice * 100 : 0;
 
   const bdDev = remainToDev;
   const bdSeller = toSeller;
+  const bdSc = scRefund;
+  const bdRent = rentRefund;
   const bdAgency = buyerComm + buyerConvFee;
   const bdDld = dldFee + titleDeedFee + trusteeFee;
   const bdBank = mortgageTotal;
-  const bdTotal = bdDev + bdSeller + bdAgency + bdDld + bdBank;
+  const bdTotal = bdDev + bdSeller + bdSc + bdRent + bdAgency + bdDld + bdBank;
 
   const sellerCommPct = num('sellerCommPct');
   const sellerComm = dealPrice * sellerCommPct / 100 * (1 + vatPct / 100);
@@ -750,23 +827,25 @@ function recompute(){
   const sdExportAgency = sellerComm;
   const sdExportOther = sellerConvFee + lateFee;
 
-  const netProceeds = toSeller - sellerTotal;
+  const receivedFromBuyer = toSeller + scRefund + rentRefund;
+  const netProceeds = receivedFromBuyer - sellerTotal;
   const netProfit = netProceeds - paidAmount;
   const roi = paidAmount !== 0 ? (netProfit / paidAmount * 100) : 0;
   const roiAnn = roi * (12 / holdingMonths);
 
   const totalComm = buyerComm + sellerComm;
-  const combinedPct = dealPrice !== 0 ? (buyerCostsOnly - mortgageTotal + sellerTotal) / dealPrice * 100 : 0;
+  const combinedPct = dealPrice !== 0 ? (buyerCostsOnly - mortgageTotal - scRefund - rentRefund + sellerTotal) / dealPrice * 100 : 0;
 
   STATE = {
     propName, dealPrice, originalPrice, paidPct, vatPct, holdingMonths,
     dldPct, dldFee, titleDeedFee, trusteeFee, buyerCommPct, buyerComm, buyerConvFee,
-    paidAmount, remainToDev, toSeller, buyerTotal, buyerCostsPct,
-    bdDev, bdSeller, bdAgency, bdDld, bdBank, bdTotal,
-    hasMortgage, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
+    paidAmount, remainToDev, toSeller, scRefund, isRented, annualRent, rentMonthsLeft, rentDaysLeft, rentRefund,
+    buyerTotal, buyerCostsPct,
+    bdDev, bdSeller, bdSc, bdRent, bdAgency, bdDld, bdBank, bdTotal,
+    hasMortgage, loanLtvPct, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
     sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerTotal, sellerCostsPct,
     sdDev, sdAgency, sdTotal, sdExportDev, sdExportAgency, sdExportOther,
-    netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
+    receivedFromBuyer, netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
   };
 
   el('propTitle').textContent = propName;
@@ -774,13 +853,19 @@ function recompute(){
   setText('sellerCardMeta', propName + ' · ' + fmt(dealPrice) + ' · сформировано ' + DATE_STR);
 
   setText('r_dealPrice_sell', fmt(dealPrice));
+  setText('r_loanAmount', fmt(loanAmount));
   setText('r_mortgageTotal', fmt(mortgageTotal));
+  setText('r_rentRefund', fmt(rentRefund));
   setText('r_buyerTotal', fmt(buyerTotal));
   setText('r_buyerTotalPct', '= ' + fmtPct(buyerCostsPct) + ' сверх цены объекта');
 
   setText('bd_dev_label', 'Остаток по рассрочке — ' + propName);
   setText('r_bd_dev', fmt(bdDev));
   setText('r_bd_seller', fmt(bdSeller));
+  el('row_bd_sc').hidden = scRefund <= 0;
+  setText('r_bd_sc', fmt(bdSc));
+  el('row_bd_rent').hidden = rentRefund <= 0;
+  setText('r_bd_rent', fmt(bdRent));
   setText('r_bd_agency', fmt(bdAgency));
   setText('r_bd_dld', fmt(bdDld));
   el('row_bd_bank').hidden = !hasMortgage;
@@ -797,11 +882,19 @@ function recompute(){
   setText('im_netToSeller', fmt(netProceeds));
   setText('im_nocAssign', fmt(sdExportDev));
   setText('im_commVat', fmt(sellerComm));
+  el('row_im_sc').hidden = scRefund <= 0;
+  setText('im_scRefund', fmt(scRefund));
+  el('row_im_rent').hidden = rentRefund <= 0;
+  setText('im_rentRefund', fmt(rentRefund));
   setText('im_roi', fmtPct(roi));
   el('im_netToSeller').style.color = netProceeds < 0 ? 'var(--cost)' : 'var(--profit)';
   el('im_roi').style.color = roi < 0 ? 'var(--cost)' : 'var(--profit)';
 
   setText('p_received', fmt(toSeller));
+  el('row_p_sc').hidden = scRefund <= 0;
+  setText('p_scRefund', fmt(scRefund));
+  el('row_p_rent').hidden = rentRefund <= 0;
+  setText('p_rentRefund', fmt(rentRefund));
   setText('p_minusObl', '− ' + fmt(sellerTotal));
   setText('p_netProceeds', fmt(netProceeds));
   setText('p_minusInvested', '− ' + fmt(paidAmount));
@@ -981,6 +1074,11 @@ function applyDefaults(){
   el('originalPrice').value = DEFAULTS.originalPrice;
   el('paidPct').value = DEFAULTS.paidPct;
   el('holdingMonths').value = DEFAULTS.holdingMonths;
+  el('scRefund').value = DEFAULTS.scRefund;
+  el('isRented').checked = DEFAULTS.isRented;
+  el('annualRent').value = DEFAULTS.annualRent;
+  el('rentMonthsLeft').value = DEFAULTS.rentMonthsLeft;
+  el('rentDaysLeft').value = DEFAULTS.rentDaysLeft;
   el('dldPct').value = DEFAULTS.dldPct;
   el('titleDeedFee').value = DEFAULTS.titleDeedFee;
   el('trusteeFee').value = DEFAULTS.trusteeFee;
@@ -992,7 +1090,7 @@ function applyDefaults(){
   el('nocFee').value = DEFAULTS.nocFee;
   el('assignmentFeePct').value = DEFAULTS.assignmentFeePct;
   el('hasMortgage').checked = DEFAULTS.hasMortgage;
-  el('loanAmount').value = DEFAULTS.loanAmount;
+  el('loanLtvPct').value = DEFAULTS.loanLtvPct;
   el('bankFeePct').value = DEFAULTS.bankFeePct;
   el('valuationFee').value = DEFAULTS.valuationFee;
   el('dldMortgagePct').value = DEFAULTS.dldMortgagePct;
@@ -1020,6 +1118,8 @@ function buildBuyerText(){
   L.push('Кому и сколько:');
   L.push('Остаток по рассрочке — ' + s.propName + ': ' + fmt(s.bdDev));
   L.push('Продавцу: ' + fmt(s.bdSeller));
+  if (s.scRefund > 0) L.push('Возврат prepaid SC продавцу: ' + fmt(s.scRefund));
+  if (s.rentRefund > 0) L.push('Возврат аренды продавцу: ' + fmt(s.rentRefund));
   L.push('Госсборы (DLD + Trustee + Title Deed): ' + fmt(s.bdDld));
   L.push('Комиссия агентства: ' + fmt(s.bdAgency));
   if (s.hasMortgage) L.push('Ипотека (банк + DLD): ' + fmt(s.bdBank));
@@ -1040,6 +1140,8 @@ function buildSellerText(){
   L.push('NOC и сборы застройщика: ' + fmt(s.sdExportDev));
   L.push('Агентская комиссия: ' + fmt(s.sdExportAgency));
   if (s.sdExportOther) L.push('Прочее: ' + fmt(s.sdExportOther));
+  if (s.scRefund > 0) L.push('Возврат prepaid SC: ' + fmt(s.scRefund));
+  if (s.rentRefund > 0) L.push('Возврат аренды: ' + fmt(s.rentRefund));
   L.push('');
   L.push('Чистая прибыль: ' + fmt(s.netProfit) + '  ·  ROI: ' + fmtPct(s.roi));
   return L.join('\n');
