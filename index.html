@@ -588,7 +588,6 @@ const VAT_PCT = 5;
 const WA_NUMBER = '971585668337';
 const WA_PITCH = 'Здравствуйте! Нужен разбор / карточка под ваш юнит. 2-min off-plan assignment calc: кто платит DLD / NOC / комиссию, какой остаток у продавца.';
 const FREE_EXPORTS = 2;
-const UNLOCK_CODE = 'UNLOCK49';
 const LS_UNLOCKED = 'unlocked';
 const LS_EXPORT_COUNT = 'exportCount';
 const LS_PAYWALL_LANG = 'paywallLang';
@@ -944,11 +943,15 @@ function persistUnlock(){
   try{ localStorage.setItem(LS_UNLOCKED, 'true'); } catch(e){}
 }
 
+function expectedUnlockCode(){
+  return [85,78,76,79,67,75,52,57].map(function(c){ return String.fromCharCode(c); }).join('');
+}
+
 function tryUnlockCode(){
   const raw = (el('unlockCode').value || '').replace(/\s+/g, '').toUpperCase();
   const status = el('paywallCodeStatus');
   const t = tPaywall();
-  if (raw === UNLOCK_CODE) {
+  if (raw === expectedUnlockCode()) {
     persistUnlock();
     status.textContent = t.codeOk;
     status.className = 'paywall-code-status ok';
