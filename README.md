@@ -21,7 +21,7 @@ No Stripe, no subscription, no ads, no CRM.
 
 ### Unlock code (operator-only)
 
-The public page never shows the code (not in helper text, not in the WhatsApp prefill). Brokers send it manually after AED 49.
+The public page never shows the code — not in helper text, not in the WhatsApp prefill, not as a readable string in page source. Brokers send it manually after AED 49.
 
 - Code: `UNLOCK49` (case-insensitive, spaces ignored)
 - On success the app sets `localStorage.unlocked = "true"`
