@@ -102,7 +102,7 @@ body{
 .params-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px 18px;}
 .field label{display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;}
 .field .hint{display:block; font-size:10.5px; color:var(--ink-faint); margin-top:4px;}
-.field input[type=text], .field input[type=number]{
+.field input[type=text], .field input[type=number], .field input[type=date]{
   width:100%; font-family:"IBM Plex Mono",monospace; font-size:13.5px;
   background:var(--surface-2); border:1px solid var(--rule); border-radius:7px;
   padding:8px 10px; color:var(--ink); transition:border-color .15s, background .15s;
@@ -176,65 +176,9 @@ body{
 .card.exporting .export-only{display:block;}
 .card.exporting .export-only [hidden]{display:none !important;}
 .card.exporting .no-export{display:none !important;}
-.export-hint{font-size:11.5px; color:var(--ink-faint); width:100%; margin:0 0 4px;}
 #sellerShareCard{
   position:absolute; left:-9999px; top:0; width:380px; margin:0;
 }
-
-.paywall{
-  position:fixed; inset:0; z-index:50;
-  background:rgba(18,21,26,.48);
-  display:flex; align-items:center; justify-content:center;
-  padding:20px;
-}
-.paywall[hidden]{display:none !important;}
-.paywall-card{
-  width:min(440px,100%);
-  background:var(--surface);
-  border:1px solid var(--rule);
-  border-radius:14px;
-  box-shadow:var(--shadow);
-  padding:22px 24px 20px;
-  position:relative;
-}
-.paywall-card[dir="rtl"]{text-align:right;}
-.paywall-close{
-  position:absolute; top:10px; inset-inline-end:12px;
-  border:none; background:transparent; color:var(--ink-faint);
-  font-size:22px; line-height:1; cursor:pointer; padding:4px 6px;
-}
-.paywall-close:hover{color:var(--ink);}
-.paywall-close:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-.paywall-langs{display:flex; gap:6px; margin:0 0 14px; flex-wrap:wrap;}
-.paywall-lang{
-  border:1px solid var(--rule-strong); background:var(--surface-2); color:var(--ink-soft);
-  font-family:inherit; font-size:11.5px; padding:4px 9px; border-radius:6px; cursor:pointer;
-}
-.paywall-lang[aria-pressed="true"]{
-  border-color:var(--accent); background:var(--accent-soft); color:var(--accent);
-}
-.paywall-lang:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-.paywall-card h2{
-  font-family:"Fraunces",serif; font-weight:600; font-size:22px;
-  margin:0 0 8px; letter-spacing:-0.01em;
-}
-.paywall-card .lead{color:var(--ink-soft); font-size:13px; margin:0 0 12px; line-height:1.55;}
-.paywall-card ul{margin:0 0 16px; padding-inline-start:1.15em; color:var(--ink-soft); font-size:12.5px;}
-.paywall-card li{margin:5px 0;}
-.paywall-card li b{color:var(--ink); font-weight:600;}
-.paywall-wa{width:100%; margin-bottom:16px; min-height:40px;}
-.paywall-code label{display:block; font-size:11.5px; color:var(--ink-soft); margin-bottom:6px;}
-.paywall-code-row{display:flex; gap:8px;}
-.paywall-code-row input{
-  flex:1; min-width:0; font-family:"IBM Plex Mono",monospace; font-size:13.5px;
-  background:var(--surface-2); border:1px solid var(--rule); border-radius:7px;
-  padding:8px 10px; color:var(--ink);
-}
-.paywall-code-row input:focus-visible{outline:none; border-color:var(--accent); background:var(--surface);}
-.paywall-code-row .export-btn{flex:0 0 auto; min-width:0; margin:0;}
-.paywall-code-status{font-size:11.5px; color:var(--ink-faint); min-height:16px; margin:8px 0 0;}
-.paywall-code-status.ok{color:var(--profit);}
-.paywall-code-status.bad{color:var(--cost);}
 
 footer{margin-top:20px; color:var(--ink-faint); font-size:11.5px; line-height:1.7;}
 footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
@@ -304,6 +248,56 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       </div>
     </div>
 
+    <div class="subhead">В аренде</div>
+    <div class="ledger-row">
+      <span class="label">Объект в аренде</span>
+      <label class="switch">
+        <input type="checkbox" id="isRented">
+        <span class="track"></span>
+        <span id="rentedStateLabel">Нет</span>
+      </label>
+    </div>
+    <div id="rentFields" hidden>
+      <div class="params-grid" style="margin-top:12px;">
+        <div class="field">
+          <label for="scAnnual">SC в год</label>
+          <input type="number" id="scAnnual" value="0" step="1" min="0">
+          <span class="hint">AED / year · prorata buyer→seller</span>
+        </div>
+        <div class="field">
+          <label for="rentAnnual">Аренда в год</label>
+          <input type="number" id="rentAnnual" value="0" step="1" min="0">
+          <span class="hint">AED / year · prorata seller→buyer</span>
+        </div>
+        <div class="field">
+          <label for="handoverDate">Дата передачи</label>
+          <input type="date" id="handoverDate">
+        </div>
+        <div class="field">
+          <label for="prepaidUntil">Prepaid до</label>
+          <input type="date" id="prepaidUntil">
+        </div>
+        <div class="field">
+          <label for="remainingDays">Осталось дней</label>
+          <input type="number" id="remainingDays" value="0" step="1" min="0">
+          <span class="hint" id="prorateDaysHint">или из дат; daily = год / 365</span>
+        </div>
+        <div class="field">
+          <label for="securityDeposit">Депозит (security deposit)</label>
+          <input type="number" id="securityDeposit" value="0" step="1" min="0">
+          <span class="hint">абсолют AED · → покупатель</span>
+        </div>
+      </div>
+      <div class="ledger-row" style="margin-top:4px;">
+        <span class="label">SC prorata · buyer→seller</span>
+        <span class="computed" id="r_scProrate">—</span>
+      </div>
+      <div class="ledger-row">
+        <span class="label">Rent prorata · seller→buyer</span>
+        <span class="computed" id="r_rentProrate">—</span>
+      </div>
+    </div>
+
     <div class="subhead">Ставки и сборы покупателя</div>
     <div class="params-grid">
       <div class="field">
@@ -342,8 +336,9 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       <p class="row-caption">Ипотека на переуступку до сдачи объекта в Дубае доступна ограниченно: чаще банк финансирует только финальный платёж застройщику при хендовере, а не выкуп доли у текущего собственника. Уточняйте у банка или ипотечного брокера, что именно можно профинансировать в конкретной сделке.</p>
       <div class="params-grid" style="margin-top:12px;">
         <div class="field">
-          <label for="loanAmount">Сумма кредита</label>
-          <input type="number" id="loanAmount" value="0" step="1">
+          <label for="loanPct">LTV от цены сделки</label>
+          <div class="unitwrap"><input type="number" id="loanPct" value="50" step="1" min="0" max="100"><span class="unit">%</span></div>
+          <span class="hint" id="loanAmountHint">например 40 / 50 / 60</span>
         </div>
         <div class="field">
           <label for="bankFeePct">Комиссия банка</label>
@@ -384,6 +379,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <span class="computed" id="r_buyerTotal">—</span>
       </div>
       <div class="total-sub" id="r_buyerTotalPct">—</div>
+      <div class="total-sub" id="r_buyerLoanNote" hidden>—</div>
 
       <div class="subhead">Кому и сколько</div>
       <div class="ledger-row">
@@ -394,6 +390,18 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <span class="payee-fixed">Продавцу</span>
         <span class="computed" id="r_bd_seller">—</span>
       </div>
+      <div class="ledger-row" id="row_bd_sc" hidden>
+        <span class="payee-fixed">SC buyer→seller</span>
+        <span class="computed" id="r_bd_sc">—</span>
+      </div>
+      <div class="ledger-row" id="row_bd_rent" hidden>
+        <span class="payee-fixed">rent seller→buyer</span>
+        <span class="computed" id="r_bd_rent">—</span>
+      </div>
+      <div class="ledger-row" id="row_bd_deposit" hidden>
+        <span class="payee-fixed">deposit → buyer</span>
+        <span class="computed" id="r_bd_deposit">—</span>
+      </div>
       <div class="ledger-row">
         <span class="payee-fixed">Госсборы (DLD + Trustee + Title Deed)</span>
         <span class="computed" id="r_bd_dld">—</span>
@@ -403,13 +411,12 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <span class="computed" id="r_bd_agency">—</span>
       </div>
       <div class="ledger-row" id="row_bd_bank" hidden>
-        <span class="payee-fixed">Ипотека (банк + DLD)</span>
+        <span class="payee-fixed" id="bd_bank_label">Ипотека (банк + DLD)</span>
         <span class="computed" id="r_bd_bank">—</span>
       </div>
       <p class="row-caption">«Продавцу» — цена объекта минус остаток по рассрочке: покупатель довносит остаток напрямую застройщику, а разницу отдаёт продавцу.</p>
 
       <div class="export-row no-export">
-        <p class="export-hint" id="buyerExportHint"></p>
         <button class="export-btn primary" id="buyerShareBtn">Поделиться карточкой</button>
         <button class="export-btn" id="buyerExportPngBtn">Скачать изображение</button>
         <button class="export-btn" id="buyerExportTxtBtn">Скачать / скопировать текст</button>
@@ -462,28 +469,24 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       <div class="total-sub" id="r_sellerTotalPct">—</div>
 
       <div class="no-export">
-        <div class="subhead">Разбивка платежей продавца</div>
-        <div class="ledger-row">
-          <span class="payee-fixed" id="sd_dev_label">NOC и сборы застройщика</span>
-          <span class="computed" id="r_sd_dev">—</span>
-        </div>
-        <div class="ledger-row">
-          <span class="payee-fixed">Агентская комиссия</span>
-          <span class="computed" id="r_sd_agency">—</span>
-        </div>
-        <div class="ledger-row total">
-          <span class="label">Итого</span>
-          <span class="computed" id="r_sd_total">—</span>
-        </div>
-      </div>
-
-      <div class="no-export">
         <div class="subhead">Прибыль и доходность</div>
         <div class="deriv">
           <div class="deriv-list">
             <div class="ledger-row">
               <span class="label">Получено от покупателя напрямую</span>
               <span class="computed" id="p_received">—</span>
+            </div>
+            <div class="ledger-row" id="row_p_sc" hidden>
+              <span class="label">SC buyer→seller</span>
+              <span class="computed" id="p_scRefund">—</span>
+            </div>
+            <div class="ledger-row" id="row_p_rent" hidden>
+              <span class="label">rent seller→buyer</span>
+              <span class="computed" id="p_rent">—</span>
+            </div>
+            <div class="ledger-row" id="row_p_deposit" hidden>
+              <span class="label">deposit → buyer</span>
+              <span class="computed" id="p_deposit">—</span>
             </div>
             <div class="ledger-row">
               <span class="label">Минус обязательства продавца</span>
@@ -524,7 +527,6 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       </div>
 
       <div class="export-row no-export">
-        <p class="export-hint" id="sellerExportHint"></p>
         <button class="export-btn primary" id="sellerShareBtn">Поделиться карточкой</button>
         <button class="export-btn" id="sellerExportPngBtn">Скачать изображение</button>
         <button class="export-btn" id="sellerExportTxtBtn">Скачать / скопировать текст</button>
@@ -560,115 +562,54 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
   </footer>
 </div>
 
-<div class="paywall" id="paywall" hidden>
-  <div class="paywall-card" id="paywallCard" role="dialog" aria-modal="true" aria-labelledby="paywallTitle">
-    <button type="button" class="paywall-close" id="paywallClose" aria-label="Close">&times;</button>
-    <div class="paywall-langs" role="group" aria-label="Language">
-      <button type="button" class="paywall-lang" data-lang="ru" aria-pressed="true">RU</button>
-      <button type="button" class="paywall-lang" data-lang="en" aria-pressed="false">EN</button>
-      <button type="button" class="paywall-lang" data-lang="ar" aria-pressed="false">AR</button>
-    </div>
-    <h2 id="paywallTitle"></h2>
-    <p class="lead" id="paywallLead"></p>
-    <ul id="paywallPoints"></ul>
-    <a class="wa-cta paywall-wa" id="paywallWa" href="https://wa.me/971585668337" target="_blank" rel="noopener noreferrer"></a>
-    <div class="paywall-code">
-      <label for="unlockCode" id="paywallCodeLabel"></label>
-      <div class="paywall-code-row">
-        <input type="text" id="unlockCode" autocomplete="off" spellcheck="false" maxlength="32">
-        <button type="button" class="export-btn primary" id="unlockBtn"></button>
-      </div>
-      <p class="paywall-code-status" id="paywallCodeStatus"></p>
-    </div>
-  </div>
-</div>
-
 <script>
 const VAT_PCT = 5;
 const WA_NUMBER = '971585668337';
 const WA_PITCH = 'Здравствуйте! Нужен разбор / карточка под ваш юнит. 2-min off-plan assignment calc: кто платит DLD / NOC / комиссию, какой остаток у продавца.';
-const FREE_EXPORTS = 2;
-const LS_UNLOCKED = 'unlocked';
-const LS_EXPORT_COUNT = 'exportCount';
-const LS_PAYWALL_LANG = 'paywallLang';
-
-const PAYWALL_I18N = {
-  ru: {
-    dir: 'ltr',
-    title: 'Unlock export forever — AED 49',
-    lead: 'Калькулятор остаётся бесплатным. После двух коротких карточек шаринг и скачивание — разово, навсегда. Без подписки.',
-    points: [
-      '<b>Считать сделку</b> — всегда бесплатно',
-      '<b>2 карточки</b> в этом браузере — бесплатно',
-      'Дальше: один unlock, <b>AED 49</b>'
-    ],
-    wa: 'WhatsApp · unlock AED 49',
-    waText: 'Хочу unlock калькулятора переуступки — 49 AED',
-    codeLabel: 'Есть код разблокировки',
-    codePh: 'Код',
-    codeBtn: 'Открыть',
-    codeOk: 'Unlock активен — шаринг снова доступен.',
-    codeBad: 'Код не подошёл. Напишите в WhatsApp — вышлем код после оплаты AED 49.',
-    close: 'Закрыть',
-    hintLeft: 'Бесплатных карточек осталось: {n}',
-    hintLast: 'Последняя бесплатная карточка в этом браузере',
-    hintLocked: 'Дальше нужен unlock — AED 49'
-  },
-  en: {
-    dir: 'ltr',
-    title: 'Unlock export forever — AED 49',
-    lead: 'The calculator stays free. After two short share cards, further export is a one-time unlock. No subscription.',
-    points: [
-      '<b>Deal math</b> is always free',
-      '<b>2 cards</b> in this browser are free',
-      'After that: one unlock, <b>AED 49</b>'
-    ],
-    wa: 'WhatsApp · unlock AED 49',
-    waText: 'I want to unlock the assignment calculator — 49 AED',
-    codeLabel: 'Have an unlock code',
-    codePh: 'Code',
-    codeBtn: 'Unlock',
-    codeOk: 'Unlock is on — sharing is available again.',
-    codeBad: 'That code did not work. Message on WhatsApp — we will send the code after 49 AED.',
-    close: 'Close',
-    hintLeft: 'Free cards left: {n}',
-    hintLast: 'Last free card in this browser',
-    hintLocked: 'Further export needs unlock — 49 AED'
-  },
-  ar: {
-    dir: 'rtl',
-    title: 'فتح دائم — 49 درهم',
-    lead: 'الآلة الحاسبة مجانية دائماً. بعد بطاقتين قصيرتين، المشاركة والتحميل تحتاج فتحاً لمرة واحدة. بدون اشتراك.',
-    points: [
-      '<b>حساب الصفقة</b> مجاني دائماً',
-      '<b>بطاقتان</b> مجاناً في هذا المتصفح',
-      'بعدها: فتح واحد بـ <b>49 درهم</b>'
-    ],
-    wa: 'واتساب · فتح 49 درهم',
-    waText: 'أريد فتح آلة حاسبة التنازل — 49 درهم',
-    codeLabel: 'يوجد رمز فتح',
-    codePh: 'الرمز',
-    codeBtn: 'فتح',
-    codeOk: 'تم الفتح — المشاركة متاحة.',
-    codeBad: 'الرمز غير صحيح. راسلونا على واتساب بعد دفع 49 درهم.',
-    close: 'إغلاق',
-    hintLeft: 'بطاقات مجانية متبقية: {n}',
-    hintLast: 'آخر بطاقة مجانية في هذا المتصفح',
-    hintLocked: 'للمزيد تحتاجون فتحاً — 49 درهم'
-  }
-};
 
 const DEFAULTS = {
   propName:"Sunrise Bay T2 — 501", dealPrice:1195000, originalPrice:1011676, paidPct:40,
   holdingMonths:18,
   dldPct:4, titleDeedFee:580, trusteeFee:4200, buyerCommPct:2, buyerConvFee:0,
   sellerCommPct:2, sellerConvFee:5250, lateFee:0, nocFee:5250, assignmentFeePct:0,
-  hasMortgage:false, loanAmount:0, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
-  dldMortgageFixed:290, insuranceYearly:2500
+  hasMortgage:false, loanPct:50, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
+  dldMortgageFixed:290, insuranceYearly:2500,
+  isRented:false, scAnnual:0, rentAnnual:0, handoverDate:"", prepaidUntil:"",
+  remainingDays:0, securityDeposit:0
 };
 
 function el(id){ return document.getElementById(id); }
 function num(id){ return parseFloat(el(id).value) || 0; }
+
+function parseDate(id){
+  const v = el(id).value;
+  if (!v) return null;
+  const d = new Date(v + 'T00:00:00');
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function daysRemaining(from, to){
+  if (!from || !to) return 0;
+  const a = Date.UTC(from.getFullYear(), from.getMonth(), from.getDate());
+  const b = Date.UTC(to.getFullYear(), to.getMonth(), to.getDate());
+  const diff = Math.round((b - a) / 86400000);
+  return diff < 0 ? 0 : diff + 1;
+}
+
+function prorateAnnual(annual, days){
+  if (annual <= 0 || days <= 0) return 0;
+  return annual / 365 * days;
+}
+
+function remainingFor(untilId, daysId, handover){
+  const until = parseDate(untilId);
+  if (handover && until) {
+    const days = daysRemaining(handover, until);
+    if (document.activeElement !== el(daysId)) el(daysId).value = days;
+    return days;
+  }
+  return Math.max(0, num(daysId));
+}
 
 function fmt(v){
   const r = Math.round(v);
@@ -708,10 +649,28 @@ function recompute(){
   const hasMortgage = el('hasMortgage').checked;
   el('mortgageFields').hidden = !hasMortgage;
   el('mortgageStateLabel').textContent = hasMortgage ? 'Да' : 'Нет';
-  if (hasMortgage && num('loanAmount') === 0 && remainToDev > 0) {
-    el('loanAmount').value = Math.round(remainToDev);
+  const loanPct = hasMortgage ? num('loanPct') : 0;
+  const loanAmount = hasMortgage ? dealPrice * loanPct / 100 : 0;
+  const buyerCashForUnit = dealPrice - loanAmount;
+
+  const isRented = el('isRented').checked;
+  el('rentFields').hidden = !isRented;
+  el('rentedStateLabel').textContent = isRented ? 'Да' : 'Нет';
+  if (!isRented) {
+    el('scAnnual').value = 0;
+    el('rentAnnual').value = 0;
+    el('handoverDate').value = '';
+    el('prepaidUntil').value = '';
+    el('remainingDays').value = 0;
+    el('securityDeposit').value = 0;
   }
-  const loanAmount = hasMortgage ? num('loanAmount') : 0;
+  const remainingDays = isRented ? remainingFor('prepaidUntil', 'remainingDays', parseDate('handoverDate')) : 0;
+  const scAnnual = isRented ? Math.max(num('scAnnual'), 0) : 0;
+  const rentAnnual = isRented ? Math.max(num('rentAnnual'), 0) : 0;
+  const prepaidSc = isRented ? prorateAnnual(scAnnual, remainingDays) : 0;
+  const prepaidRent = isRented ? prorateAnnual(rentAnnual, remainingDays) : 0;
+  const securityDeposit = isRented ? Math.max(num('securityDeposit'), 0) : 0;
+
   const bankFeePct = num('bankFeePct');
   const bankFee = loanAmount * bankFeePct / 100;
   const valuationFee = num('valuationFee');
@@ -722,16 +681,19 @@ function recompute(){
   const mortgageTotal = hasMortgage ? (bankFee + valuationFee + dldMortgageFee) : 0;
   const insuranceYearly = num('insuranceYearly');
 
-  const buyerTotal = dealPrice + dldFee + titleDeedFee + trusteeFee + buyerComm + buyerConvFee + mortgageTotal;
+  const buyerTotal = dealPrice + dldFee + titleDeedFee + trusteeFee + buyerComm + buyerConvFee + mortgageTotal + prepaidSc - prepaidRent - securityDeposit;
   const buyerCostsOnly = buyerTotal - dealPrice;
   const buyerCostsPct = dealPrice !== 0 ? buyerCostsOnly / dealPrice * 100 : 0;
 
   const bdDev = remainToDev;
   const bdSeller = toSeller;
+  const bdSc = prepaidSc;
+  const bdRent = prepaidRent;
+  const bdDeposit = securityDeposit;
   const bdAgency = buyerComm + buyerConvFee;
   const bdDld = dldFee + titleDeedFee + trusteeFee;
   const bdBank = mortgageTotal;
-  const bdTotal = bdDev + bdSeller + bdAgency + bdDld + bdBank;
+  const bdTotal = bdDev + bdSeller + bdSc - bdRent - bdDeposit + bdAgency + bdDld + bdBank;
 
   const sellerCommPct = num('sellerCommPct');
   const sellerComm = dealPrice * sellerCommPct / 100 * (1 + vatPct / 100);
@@ -743,29 +705,27 @@ function recompute(){
   const sellerTotal = sellerComm + sellerConvFee + lateFee + nocFee + assignmentFee;
   const sellerCostsPct = dealPrice !== 0 ? sellerTotal / dealPrice * 100 : 0;
 
-  const sdDev = nocFee + lateFee + assignmentFee;
-  const sdAgency = sellerComm + sellerConvFee;
-  const sdTotal = sdDev + sdAgency;
   const sdExportDev = nocFee + assignmentFee;
   const sdExportAgency = sellerComm;
   const sdExportOther = sellerConvFee + lateFee;
 
-  const netProceeds = toSeller - sellerTotal;
+  const netProceeds = toSeller + prepaidSc - prepaidRent - securityDeposit - sellerTotal;
   const netProfit = netProceeds - paidAmount;
   const roi = paidAmount !== 0 ? (netProfit / paidAmount * 100) : 0;
   const roiAnn = roi * (12 / holdingMonths);
 
   const totalComm = buyerComm + sellerComm;
-  const combinedPct = dealPrice !== 0 ? (buyerCostsOnly - mortgageTotal + sellerTotal) / dealPrice * 100 : 0;
+  const combinedPct = dealPrice !== 0 ? (buyerCostsOnly - mortgageTotal - prepaidSc + prepaidRent + securityDeposit + sellerTotal) / dealPrice * 100 : 0;
 
   STATE = {
     propName, dealPrice, originalPrice, paidPct, vatPct, holdingMonths,
     dldPct, dldFee, titleDeedFee, trusteeFee, buyerCommPct, buyerComm, buyerConvFee,
-    paidAmount, remainToDev, toSeller, buyerTotal, buyerCostsPct,
-    bdDev, bdSeller, bdAgency, bdDld, bdBank, bdTotal,
-    hasMortgage, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
+    paidAmount, remainToDev, toSeller, buyerTotal, buyerCostsPct, buyerCashForUnit,
+    bdDev, bdSeller, bdSc, bdRent, bdDeposit, bdAgency, bdDld, bdBank, bdTotal,
+    hasMortgage, loanPct, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
+    isRented, scAnnual, rentAnnual, remainingDays, prepaidSc, prepaidRent, securityDeposit,
     sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerTotal, sellerCostsPct,
-    sdDev, sdAgency, sdTotal, sdExportDev, sdExportAgency, sdExportOther,
+    sdExportDev, sdExportAgency, sdExportOther,
     netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
   };
 
@@ -777,23 +737,46 @@ function recompute(){
   setText('r_mortgageTotal', fmt(mortgageTotal));
   setText('r_buyerTotal', fmt(buyerTotal));
   setText('r_buyerTotalPct', '= ' + fmtPct(buyerCostsPct) + ' сверх цены объекта');
+  const loanNote = el('r_buyerLoanNote');
+  if (hasMortgage) {
+    loanNote.hidden = false;
+    loanNote.textContent = 'ипотека ' + fmtPct(loanPct, 0) + ' = ' + fmt(loanAmount) + ' · кэш на объект ' + fmt(buyerCashForUnit);
+  } else {
+    loanNote.hidden = true;
+    loanNote.textContent = '';
+  }
+  setText('loanAmountHint', hasMortgage
+    ? '= ' + fmt(loanAmount) + ' (цена × ' + fmtPct(loanPct, 0) + ')'
+    : 'например 40 / 50 / 60');
+  if (isRented) {
+    setText('r_scProrate', fmt(prepaidSc));
+    setText('r_rentProrate', fmt(prepaidRent));
+    setText('prorateDaysHint', remainingDays > 0
+      ? (remainingDays + ' дн. · daily = год / 365')
+      : 'даты или дни вручную · daily = год / 365');
+  }
 
   setText('bd_dev_label', 'Остаток по рассрочке — ' + propName);
   setText('r_bd_dev', fmt(bdDev));
   setText('r_bd_seller', fmt(bdSeller));
+  el('row_bd_sc').hidden = prepaidSc <= 0;
+  setText('r_bd_sc', fmt(bdSc));
+  el('row_bd_rent').hidden = prepaidRent <= 0;
+  setText('r_bd_rent', '− ' + fmt(bdRent));
+  el('row_bd_deposit').hidden = securityDeposit <= 0;
+  setText('r_bd_deposit', '− ' + fmt(bdDeposit));
   setText('r_bd_agency', fmt(bdAgency));
   setText('r_bd_dld', fmt(bdDld));
   el('row_bd_bank').hidden = !hasMortgage;
+  setText('bd_bank_label', hasMortgage
+    ? ('Ипотека ' + fmtPct(loanPct, 0) + ' · сборы банка + DLD')
+    : 'Ипотека (банк + DLD)');
   setText('r_bd_bank', fmt(bdBank));
 
   setText('r_sellerComm', fmt(sellerComm));
   setText('r_assignmentFee', fmt(assignmentFee));
   setText('r_sellerTotal', fmt(sellerTotal));
   setText('r_sellerTotalPct', '= ' + fmtPct(sellerCostsPct) + ' от цены объекта');
-  setText('sd_dev_label', propName + ' — NOC и сборы застройщика');
-  setText('r_sd_dev', fmt(sdDev));
-  setText('r_sd_agency', fmt(sdAgency));
-  setText('r_sd_total', fmt(sdTotal));
   setText('im_netToSeller', fmt(netProceeds));
   setText('im_nocAssign', fmt(sdExportDev));
   setText('im_commVat', fmt(sellerComm));
@@ -802,6 +785,12 @@ function recompute(){
   el('im_roi').style.color = roi < 0 ? 'var(--cost)' : 'var(--profit)';
 
   setText('p_received', fmt(toSeller));
+  el('row_p_sc').hidden = prepaidSc <= 0;
+  setText('p_scRefund', '+ ' + fmt(prepaidSc));
+  el('row_p_rent').hidden = prepaidRent <= 0;
+  setText('p_rent', '− ' + fmt(prepaidRent));
+  el('row_p_deposit').hidden = securityDeposit <= 0;
+  setText('p_deposit', '− ' + fmt(securityDeposit));
   setText('p_minusObl', '− ' + fmt(sellerTotal));
   setText('p_netProceeds', fmt(netProceeds));
   setText('p_minusInvested', '− ' + fmt(paidAmount));
@@ -841,140 +830,6 @@ function updateWhatsAppLinks(){
   if (foot) foot.href = href;
 }
 
-/* ---- one-time unlock (49 AED) ---- */
-let pendingExport = null;
-let paywallLang = 'ru';
-
-function detectPaywallLang(){
-  try{
-    const saved = localStorage.getItem(LS_PAYWALL_LANG);
-    if (saved && PAYWALL_I18N[saved]) return saved;
-  } catch(e){}
-  return 'ru';
-}
-
-function isUnlocked(){
-  try{ return localStorage.getItem(LS_UNLOCKED) === 'true'; } catch(e){ return false; }
-}
-
-function getExportCount(){
-  try{
-    const n = parseInt(localStorage.getItem(LS_EXPORT_COUNT) || '0', 10);
-    return isFinite(n) && n > 0 ? n : 0;
-  } catch(e){ return 0; }
-}
-
-function canExport(){
-  return isUnlocked() || getExportCount() < FREE_EXPORTS;
-}
-
-function markExportSuccess(){
-  if (isUnlocked()) return;
-  try{ localStorage.setItem(LS_EXPORT_COUNT, String(getExportCount() + 1)); } catch(e){}
-  updateExportHints();
-}
-
-function tPaywall(){
-  return PAYWALL_I18N[paywallLang] || PAYWALL_I18N.ru;
-}
-
-function buildUnlockWhatsAppUrl(){
-  return 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(tPaywall().waText);
-}
-
-function applyPaywallLang(lang){
-  if (!PAYWALL_I18N[lang]) lang = 'ru';
-  paywallLang = lang;
-  try{ localStorage.setItem(LS_PAYWALL_LANG, lang); } catch(e){}
-  const t = tPaywall();
-  const card = el('paywallCard');
-  card.dir = t.dir;
-  card.lang = lang;
-  setText('paywallTitle', t.title);
-  setText('paywallLead', t.lead);
-  el('paywallPoints').innerHTML = t.points.map(function(p){ return '<li>' + p + '</li>'; }).join('');
-  const wa = el('paywallWa');
-  wa.textContent = t.wa;
-  wa.href = buildUnlockWhatsAppUrl();
-  setText('paywallCodeLabel', t.codeLabel);
-  el('unlockCode').placeholder = t.codePh;
-  el('unlockBtn').textContent = t.codeBtn;
-  el('paywallClose').setAttribute('aria-label', t.close);
-  document.querySelectorAll('.paywall-lang').forEach(function(btn){
-    btn.setAttribute('aria-pressed', btn.getAttribute('data-lang') === lang ? 'true' : 'false');
-  });
-  updateExportHints();
-}
-
-function hintText(){
-  if (isUnlocked()) return '';
-  const t = tPaywall();
-  const left = FREE_EXPORTS - getExportCount();
-  if (left <= 0) return t.hintLocked;
-  if (left === 1) return t.hintLast;
-  return t.hintLeft.replace('{n}', String(left));
-}
-
-function updateExportHints(){
-  const text = hintText();
-  ['buyerExportHint', 'sellerExportHint'].forEach(function(id){
-    const node = el(id);
-    if (node) node.textContent = text;
-  });
-}
-
-function showPaywall(){
-  if (isUnlocked()) return;
-  applyPaywallLang(paywallLang);
-  const status = el('paywallCodeStatus');
-  status.textContent = '';
-  status.className = 'paywall-code-status';
-  el('unlockCode').value = '';
-  el('paywall').hidden = false;
-  el('unlockCode').focus();
-}
-
-function hidePaywall(){
-  el('paywall').hidden = true;
-  pendingExport = null;
-}
-
-function persistUnlock(){
-  try{ localStorage.setItem(LS_UNLOCKED, 'true'); } catch(e){}
-}
-
-function expectedUnlockCode(){
-  return [85,78,76,79,67,75,52,57].map(function(c){ return String.fromCharCode(c); }).join('');
-}
-
-function tryUnlockCode(){
-  const raw = (el('unlockCode').value || '').replace(/\s+/g, '').toUpperCase();
-  const status = el('paywallCodeStatus');
-  const t = tPaywall();
-  if (raw === expectedUnlockCode()) {
-    persistUnlock();
-    status.textContent = t.codeOk;
-    status.className = 'paywall-code-status ok';
-    updateExportHints();
-    const resume = pendingExport;
-    pendingExport = null;
-    el('paywall').hidden = true;
-    if (resume) resume();
-    return;
-  }
-  status.textContent = t.codeBad;
-  status.className = 'paywall-code-status bad';
-}
-
-function guardExport(fn){
-  if (isUnlocked() || canExport()) {
-    fn();
-    return;
-  }
-  pendingExport = fn;
-  showPaywall();
-}
-
 function applyDefaults(){
   el('propName').value = DEFAULTS.propName;
   el('dealPrice').value = DEFAULTS.dealPrice;
@@ -992,7 +847,14 @@ function applyDefaults(){
   el('nocFee').value = DEFAULTS.nocFee;
   el('assignmentFeePct').value = DEFAULTS.assignmentFeePct;
   el('hasMortgage').checked = DEFAULTS.hasMortgage;
-  el('loanAmount').value = DEFAULTS.loanAmount;
+  el('loanPct').value = DEFAULTS.loanPct;
+  el('isRented').checked = DEFAULTS.isRented;
+  el('scAnnual').value = DEFAULTS.scAnnual;
+  el('rentAnnual').value = DEFAULTS.rentAnnual;
+  el('handoverDate').value = DEFAULTS.handoverDate;
+  el('prepaidUntil').value = DEFAULTS.prepaidUntil;
+  el('remainingDays').value = DEFAULTS.remainingDays;
+  el('securityDeposit').value = DEFAULTS.securityDeposit;
   el('bankFeePct').value = DEFAULTS.bankFeePct;
   el('valuationFee').value = DEFAULTS.valuationFee;
   el('dldMortgagePct').value = DEFAULTS.dldMortgagePct;
@@ -1020,9 +882,12 @@ function buildBuyerText(){
   L.push('Кому и сколько:');
   L.push('Остаток по рассрочке — ' + s.propName + ': ' + fmt(s.bdDev));
   L.push('Продавцу: ' + fmt(s.bdSeller));
+  pushTenancyExportLines(L, s);
   L.push('Госсборы (DLD + Trustee + Title Deed): ' + fmt(s.bdDld));
   L.push('Комиссия агентства: ' + fmt(s.bdAgency));
-  if (s.hasMortgage) L.push('Ипотека (банк + DLD): ' + fmt(s.bdBank));
+  if (s.hasMortgage) {
+    L.push('Ипотека ' + fmtPct(s.loanPct, 0) + ' = ' + fmt(s.loanAmount) + ' · сборы банка + DLD: ' + fmt(s.bdBank));
+  }
   return L.join('\n');
 }
 
@@ -1033,16 +898,16 @@ function buildSellerText(){
   L.push('ОБЯЗАТЕЛЬСТВА ПРОДАВЦА');
   L.push('сформировано ' + DATE_STR);
   L.push('———————————————————————');
-  L.push('Цена объекта: ' + fmt(s.dealPrice));
   L.push('ИТОГО ОБЯЗАТЕЛЬСТВ: ' + fmt(s.sellerTotal) + '  (' + fmtPct(s.sellerCostsPct) + ' от цены объекта)');
-  L.push('');
-  L.push('Кому и сколько:');
-  L.push('NOC и сборы застройщика: ' + fmt(s.sdExportDev));
-  L.push('Агентская комиссия: ' + fmt(s.sdExportAgency));
-  if (s.sdExportOther) L.push('Прочее: ' + fmt(s.sdExportOther));
-  L.push('');
+  pushTenancyExportLines(L, s);
   L.push('Чистая прибыль: ' + fmt(s.netProfit) + '  ·  ROI: ' + fmtPct(s.roi));
   return L.join('\n');
+}
+
+function pushTenancyExportLines(L, s){
+  if (s.prepaidSc > 0) L.push('SC buyer→seller ' + fmt(s.prepaidSc));
+  if (s.prepaidRent > 0) L.push('rent seller→buyer ' + fmt(s.prepaidRent));
+  if (s.securityDeposit > 0) L.push('deposit → buyer ' + fmt(s.securityDeposit));
 }
 
 function slug(str){
@@ -1154,7 +1019,6 @@ async function downloadPng(cardId, filename, statusId){
   try{
     const blob = await renderCardPng(cardId);
     triggerDownload(filename, blob);
-    markExportSuccess();
     setStatus(statusId, 'Скачано: ' + filename);
   } catch(e){
     setStatus(statusId, 'Не удалось сохранить изображение.');
@@ -1164,7 +1028,6 @@ async function downloadPng(cardId, filename, statusId){
 async function downloadOrCopyText(filename, text, statusId){
   const copied = await copyText(text);
   triggerDownload(filename, toBlob(text, 'text/plain;charset=utf-8'));
-  markExportSuccess();
   setStatus(statusId, copied
     ? 'Текст скопирован и скачан: ' + filename
     : 'Скачано: ' + filename);
@@ -1177,7 +1040,6 @@ async function shareCard(cardId, filename, text, title, statusId){
     const file = new File([blob], filename, { type: 'image/png' });
     const shared = await sharePayload({ title: title, text: text, file: file });
     if (shared === true) {
-      markExportSuccess();
       setStatus(statusId, 'Карточка отправлена в чат.');
       return;
     }
@@ -1187,13 +1049,11 @@ async function shareCard(cardId, filename, text, title, statusId){
     }
     triggerDownload(filename, blob);
     const copied = await copyText(text);
-    markExportSuccess();
     setStatus(statusId, copied
       ? 'Share недоступен — изображение скачано, текст скопирован. Вставьте в WhatsApp.'
       : 'Share недоступен — изображение скачано: ' + filename);
   } catch(e){
     const copied = await copyText(text);
-    if (copied) markExportSuccess();
     setStatus(statusId, copied
       ? 'Не удалось собрать картинку. Текст карточки скопирован — вставьте в чат.'
       : 'Не удалось поделиться карточкой.');
@@ -1201,68 +1061,36 @@ async function shareCard(cardId, filename, text, title, statusId){
 }
 
 el('buyerShareBtn').addEventListener('click', function(){
-  guardExport(function(){
-    shareCard(
-      'buyerCard',
-      'buyer-obligations-' + slug(STATE.propName) + '.png',
-      buildBuyerText(),
-      STATE.propName + ' — обязательства покупателя',
-      'buyerExportStatus'
-    );
-  });
+  shareCard(
+    'buyerCard',
+    'buyer-obligations-' + slug(STATE.propName) + '.png',
+    buildBuyerText(),
+    STATE.propName + ' — обязательства покупателя',
+    'buyerExportStatus'
+  );
 });
 el('buyerExportPngBtn').addEventListener('click', function(){
-  guardExport(function(){
-    downloadPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
-  });
+  downloadPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
 });
 el('buyerExportTxtBtn').addEventListener('click', function(){
-  guardExport(function(){
-    downloadOrCopyText('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
-  });
+  downloadOrCopyText('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
 });
 el('sellerShareBtn').addEventListener('click', function(){
-  guardExport(function(){
-    shareCard(
-      'sellerShareCard',
-      'seller-obligations-' + slug(STATE.propName) + '.png',
-      buildSellerText(),
-      STATE.propName + ' — обязательства продавца',
-      'sellerExportStatus'
-    );
-  });
+  shareCard(
+    'sellerShareCard',
+    'seller-obligations-' + slug(STATE.propName) + '.png',
+    buildSellerText(),
+    STATE.propName + ' — обязательства продавца',
+    'sellerExportStatus'
+  );
 });
 el('sellerExportPngBtn').addEventListener('click', function(){
-  guardExport(function(){
-    downloadPng('sellerShareCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
-  });
+  downloadPng('sellerShareCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
 });
 el('sellerExportTxtBtn').addEventListener('click', function(){
-  guardExport(function(){
-    downloadOrCopyText('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
-  });
+  downloadOrCopyText('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
 });
 
-document.querySelectorAll('.paywall-lang').forEach(function(btn){
-  btn.addEventListener('click', function(){ applyPaywallLang(btn.getAttribute('data-lang')); });
-});
-el('paywallClose').addEventListener('click', hidePaywall);
-el('paywall').addEventListener('click', function(e){
-  if (e.target === el('paywall')) hidePaywall();
-});
-el('unlockBtn').addEventListener('click', tryUnlockCode);
-el('unlockCode').addEventListener('keydown', function(e){
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    tryUnlockCode();
-  }
-});
-document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape' && !el('paywall').hidden) hidePaywall();
-});
-
-paywallLang = detectPaywallLang();
-applyPaywallLang(paywallLang);
 recompute();
 </script>
 </body>

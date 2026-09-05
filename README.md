@@ -2,43 +2,52 @@
 
 Live: [https://evgheni34-hash.github.io/offplan-assignment-ledger](https://evgheni34-hash.github.io/offplan-assignment-ledger)
 
-Static GitHub Pages calculator for a Dubai off-plan assignment (переуступка). Buyer and seller ledgers stay on one screen. Share cards stay WhatsApp-short.
+Static GitHub Pages calculator for a Dubai off-plan assignment (переуступка). **Calc and share/export are free** — no paywall, no UNLOCK49.
 
-## What is free
+WhatsApp CTA (`+971 58 566 8337`) stays for «разбор юнита».
 
-- **Deal math is always free.** Changing prices, rates, mortgage, and reading the on-screen ledgers never requires payment.
-- **The first 2 successful share/exports per browser are free.** Buyer or seller, text or image, share or download — they share one counter in `localStorage` (`exportCount`).
-- Cancelled share sheets do not count. A failed export does not count.
+## Mortgage as LTV %
 
-## One-time unlock — 49 AED
+Buyer mortgage is **LTV % of deal price**. Implied loan = deal price × %. Bank / DLD mortgage fees use that AED amount.
 
-After the 2 free cards, further share/export opens a paywall (AR / RU / EN):
+## Prorata when «в аренде» is ON
 
-1. **Primary:** WhatsApp to `+971 58 566 8337` with a prefilled ask, e.g. `Хочу unlock калькулятора переуступки — 49 AED`.
-2. **Secondary:** enter the unlock code. On success the browser stores `localStorage.unlocked = "true"` forever. Reload keeps access. The paywall never shows again.
+No raw refund-AED field for SC or rent. Inputs:
 
-No Stripe, no subscription, no ads, no CRM.
+- Annual service charge (AED/year)
+- Annual rent (AED/year)
+- Remaining days, **or** transfer date + prepaid-through date (remaining days derived, inclusive)
+- Security deposit (absolute AED → buyer)
 
-### Unlock code (operator-only)
+Formula (365-day year, not 365.25):
 
-The public page never shows the code — not in helper text, not in the WhatsApp prefill, not as a readable string in page source. Brokers send it manually after AED 49.
+`daily = annual / 365`  
+`refund = daily × remaining days`
 
-- Code: `UNLOCK49` (case-insensitive, spaces ignored)
-- On success the app sets `localStorage.unlocked = "true"`
+Directions:
 
-To reset a browser for testing: DevTools → Application → Local Storage → clear `unlocked` and `exportCount`.
+- SC prorata: buyer → seller
+- Rent prorata: seller → buyer
+- Deposit: → buyer
+
+Derived refunds show on screen. Toggle **off**: fields hide and zero, no WhatsApp lines.
+
+WhatsApp / text — separate lines only if amount > 0:
+
+- `SC buyer→seller X`
+- `rent seller→buyer Y`
+- `deposit → buyer Z`
 
 ## Share cards
 
-- **Buyer:** short payee card (total + who gets what).
-- **Seller image:** four lines — net to seller, NOC / assignment, commission + VAT, ROI. Full seller estimate stays on screen.
-- **Seller text:** short WhatsApp summary (object, totals, 2–3 payee lines, profit + ROI).
+- **Buyer:** payee split («Кому и сколько») kept.
+- **Seller image:** four lines — net, NOC / assignment, commission + VAT, ROI.
+- **Seller text:** title, итого обязательств, directed lines if > 0, profit + ROI. No «Кому и сколько» NOC/agency regroup. No «Разбивка платежей продавца».
 
 ## How to test
 
-1. Open the live URL in a fresh profile or after clearing `unlocked` / `exportCount`.
-2. Change a price — tiles and ledgers update without a paywall.
-3. Download or share a card twice. The hint counts down.
-4. A third export opens the paywall. Check the WhatsApp link: `https://wa.me/971585668337?text=…` and the prefilled unlock sentence.
-5. Switch RU / EN / AR on the paywall. Arabic is RTL.
-6. Enter `UNLOCK49`. Paywall closes; export works again. Reload — still unlocked.
+1. Open the live URL. No paywall. Export many times — always free.
+2. Mortgage on: 50% of 1 195 000 = **597 500 AED**; 40% → 478 000; 60% → 717 000.
+3. «В аренде» on. SC year `36500`, rent year `73000`, remaining days `10` → SC **1 000** buyer→seller, rent **2 000** seller→buyer. Or handover `2026-01-01` + prepaid through `2026-01-10` → same 10 days. Deposit `10000` → buyer.
+4. Toggle off — SC/rent/deposit gone from ledgers and text.
+5. Seller card has no «Разбивка». Seller text has no NOC/agency «Кому и сколько».
