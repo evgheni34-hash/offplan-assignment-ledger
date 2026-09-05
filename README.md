@@ -19,13 +19,12 @@ After the 2 free cards, further share/export opens a paywall (AR / RU / EN):
 
 No Stripe, no subscription, no ads, no CRM.
 
-### Unlock code (shared secret)
+### Unlock code (operator-only)
 
-```
-UNLOCK49
-```
+The public page never shows the code (not in helper text, not in the WhatsApp prefill). Brokers send it manually after AED 49.
 
-Accepts `UNLOCK49` / `unlock49` (spaces ignored). This is an MVP gate, not a per-buyer key. After payment on WhatsApp, send this code.
+- Code: `UNLOCK49` (case-insensitive, spaces ignored)
+- On success the app sets `localStorage.unlocked = "true"`
 
 To reset a browser for testing: DevTools → Application → Local Storage → clear `unlocked` and `exportCount`.
 

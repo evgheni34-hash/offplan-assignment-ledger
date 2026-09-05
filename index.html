@@ -596,38 +596,38 @@ const LS_PAYWALL_LANG = 'paywallLang';
 const PAYWALL_I18N = {
   ru: {
     dir: 'ltr',
-    title: 'Unlock навсегда — 49 AED',
+    title: 'Unlock export forever — AED 49',
     lead: 'Калькулятор остаётся бесплатным. После двух коротких карточек шаринг и скачивание — разово, навсегда. Без подписки.',
     points: [
       '<b>Считать сделку</b> — всегда бесплатно',
       '<b>2 карточки</b> в этом браузере — бесплатно',
-      'Дальше: один unlock, <b>49 AED</b>'
+      'Дальше: один unlock, <b>AED 49</b>'
     ],
-    wa: 'WhatsApp · unlock 49 AED',
+    wa: 'WhatsApp · unlock AED 49',
     waText: 'Хочу unlock калькулятора переуступки — 49 AED',
-    codeLabel: 'Уже оплатили? Введите код',
-    codePh: 'Код unlock',
+    codeLabel: 'Есть код разблокировки',
+    codePh: 'Код',
     codeBtn: 'Открыть',
     codeOk: 'Unlock активен — шаринг снова доступен.',
-    codeBad: 'Код не подошёл. Напишите в WhatsApp — вышлем код после 49 AED.',
+    codeBad: 'Код не подошёл. Напишите в WhatsApp — вышлем код после оплаты AED 49.',
     close: 'Закрыть',
     hintLeft: 'Бесплатных карточек осталось: {n}',
     hintLast: 'Последняя бесплатная карточка в этом браузере',
-    hintLocked: 'Дальше нужен unlock — 49 AED'
+    hintLocked: 'Дальше нужен unlock — AED 49'
   },
   en: {
     dir: 'ltr',
-    title: 'Unlock forever — 49 AED',
+    title: 'Unlock export forever — AED 49',
     lead: 'The calculator stays free. After two short share cards, further export is a one-time unlock. No subscription.',
     points: [
       '<b>Deal math</b> is always free',
       '<b>2 cards</b> in this browser are free',
-      'After that: one unlock, <b>49 AED</b>'
+      'After that: one unlock, <b>AED 49</b>'
     ],
-    wa: 'WhatsApp · unlock 49 AED',
+    wa: 'WhatsApp · unlock AED 49',
     waText: 'I want to unlock the assignment calculator — 49 AED',
-    codeLabel: 'Already paid? Enter the code',
-    codePh: 'Unlock code',
+    codeLabel: 'Have an unlock code',
+    codePh: 'Code',
     codeBtn: 'Unlock',
     codeOk: 'Unlock is on — sharing is available again.',
     codeBad: 'That code did not work. Message on WhatsApp — we will send the code after 49 AED.',
@@ -647,8 +647,8 @@ const PAYWALL_I18N = {
     ],
     wa: 'واتساب · فتح 49 درهم',
     waText: 'أريد فتح آلة حاسبة التنازل — 49 درهم',
-    codeLabel: 'دفعتم؟ أدخلوا الرمز',
-    codePh: 'رمز الفتح',
+    codeLabel: 'يوجد رمز فتح',
+    codePh: 'الرمز',
     codeBtn: 'فتح',
     codeOk: 'تم الفتح — المشاركة متاحة.',
     codeBad: 'الرمز غير صحيح. راسلونا على واتساب بعد دفع 49 درهم.',
@@ -851,9 +851,6 @@ function detectPaywallLang(){
     const saved = localStorage.getItem(LS_PAYWALL_LANG);
     if (saved && PAYWALL_I18N[saved]) return saved;
   } catch(e){}
-  const nav = ((navigator.language || '').toLowerCase());
-  if (nav.indexOf('ar') === 0) return 'ar';
-  if (nav.indexOf('en') === 0) return 'en';
   return 'ru';
 }
 
