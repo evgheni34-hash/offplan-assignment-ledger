@@ -176,6 +176,9 @@ body{
 .card.exporting .export-only{display:block;}
 .card.exporting .export-only [hidden]{display:none !important;}
 .card.exporting .no-export{display:none !important;}
+#sellerShareCard{
+  position:absolute; left:-9999px; top:0; width:380px; margin:0;
+}
 
 footer{margin-top:20px; color:var(--ink-faint); font-size:11.5px; line-height:1.7;}
 footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
@@ -417,26 +420,6 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         </div>
       </div>
 
-      <div class="export-only">
-        <div class="subhead">Кому и сколько</div>
-        <div class="ledger-row">
-          <span class="payee-fixed">NOC и сборы застройщика</span>
-          <span class="computed" id="ex_sd_dev">—</span>
-        </div>
-        <div class="ledger-row">
-          <span class="payee-fixed">Агентская комиссия</span>
-          <span class="computed" id="ex_sd_agency">—</span>
-        </div>
-        <div class="ledger-row" id="row_sd_other">
-          <span class="payee-fixed">Прочее</span>
-          <span class="computed" id="ex_sd_other">—</span>
-        </div>
-        <div class="ledger-row total">
-          <span class="label">Чистая прибыль · ROI</span>
-          <span class="computed" id="ex_profitRoi">—</span>
-        </div>
-      </div>
-
       <div class="no-export">
         <div class="subhead">Прибыль и доходность</div>
         <div class="deriv">
@@ -489,6 +472,25 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         <button class="export-btn" id="sellerExportTxtBtn">Скачать / скопировать текст</button>
         <span class="export-status" id="sellerExportStatus"></span>
       </div>
+    </div>
+  </div>
+
+  <div class="card" id="sellerShareCard" aria-hidden="true">
+    <div class="ledger-row total" style="border-top:none; padding-top:0; margin-top:0;">
+      <span class="label">Чистыми продавцу</span>
+      <span class="computed" id="im_netToSeller">—</span>
+    </div>
+    <div class="ledger-row">
+      <span class="payee-fixed">NOC / assignment</span>
+      <span class="computed" id="im_nocAssign">—</span>
+    </div>
+    <div class="ledger-row">
+      <span class="payee-fixed">Комиссия + НДС</span>
+      <span class="computed" id="im_commVat">—</span>
+    </div>
+    <div class="ledger-row total">
+      <span class="label">ROI</span>
+      <span class="computed" id="im_roi">—</span>
     </div>
   </div>
 
@@ -641,13 +643,12 @@ function recompute(){
   setText('r_sd_dev', fmt(sdDev));
   setText('r_sd_agency', fmt(sdAgency));
   setText('r_sd_total', fmt(sdTotal));
-  setText('ex_sd_dev', fmt(sdExportDev));
-  setText('ex_sd_agency', fmt(sdExportAgency));
-  setText('ex_sd_other', fmt(sdExportOther));
-  el('row_sd_other').hidden = sdExportOther === 0;
-  setText('ex_profitRoi', fmt(netProfit) + '  ·  ' + fmtPct(roi));
-  const exProfit = el('ex_profitRoi');
-  exProfit.style.color = netProfit < 0 ? 'var(--cost)' : 'var(--profit)';
+  setText('im_netToSeller', fmt(netProceeds));
+  setText('im_nocAssign', fmt(sdExportDev));
+  setText('im_commVat', fmt(sellerComm));
+  setText('im_roi', fmtPct(roi));
+  el('im_netToSeller').style.color = netProceeds < 0 ? 'var(--cost)' : 'var(--profit)';
+  el('im_roi').style.color = roi < 0 ? 'var(--cost)' : 'var(--profit)';
 
   setText('p_received', fmt(toSeller));
   setText('p_minusObl', '− ' + fmt(sellerTotal));
@@ -842,7 +843,15 @@ async function renderCardPng(cardId){
     const canvas = await html2canvas(node, {
       backgroundColor: bg,
       scale: Math.min(2, window.devicePixelRatio || 2),
-      ignoreElements: function(e){ return e.classList && e.classList.contains('no-export'); }
+      ignoreElements: function(e){ return e.classList && e.classList.contains('no-export'); },
+      onclone: function(doc){
+        const shot = doc.getElementById('sellerShareCard');
+        if (shot && node.id === 'sellerShareCard') {
+          shot.style.position = 'static';
+          shot.style.left = 'auto';
+          shot.style.top = 'auto';
+        }
+      }
     });
     return await new Promise(function(resolve, reject){
       canvas.toBlob(function(blob){
@@ -918,7 +927,7 @@ el('buyerExportTxtBtn').addEventListener('click', function(){
 });
 el('sellerShareBtn').addEventListener('click', function(){
   shareCard(
-    'sellerCard',
+    'sellerShareCard',
     'seller-obligations-' + slug(STATE.propName) + '.png',
     buildSellerText(),
     STATE.propName + ' — обязательства продавца',
@@ -926,7 +935,7 @@ el('sellerShareBtn').addEventListener('click', function(){
   );
 });
 el('sellerExportPngBtn').addEventListener('click', function(){
-  downloadPng('sellerCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
+  downloadPng('sellerShareCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
 });
 el('sellerExportTxtBtn').addEventListener('click', function(){
   downloadOrCopyText('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
