@@ -284,6 +284,15 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
         </div>
       </div>
       <div class="subhead">Аренда</div>
+      <div class="ledger-row">
+        <span class="label">Аренда предоплачена до конца контракта</span>
+        <label class="switch">
+          <input type="checkbox" id="rentPrepaid" checked>
+          <span class="track"></span>
+          <span id="rentPrepaidLabel">Да</span>
+        </label>
+      </div>
+      <p class="row-caption" id="rentPrepaidCaption">Если нет (помесячно) — возврат аренды 0, строка не выдумывается.</p>
       <div class="params-grid">
         <div class="field need">
           <label for="leaseStart">Начало контракта</label>
@@ -295,10 +304,10 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
           <input type="date" id="leaseEnd">
           <span class="hint" id="rentDaysHint">неиспользованные дни: сделка → конец</span>
         </div>
-        <div class="field need">
+        <div class="field need" id="rentAnnualField">
           <label for="rentAnnual">Аренда в год</label>
           <input type="number" id="rentAnnual" value="" step="1" min="0">
-          <span class="hint">AED / год · продавец → покупатель</span>
+          <span class="hint" id="rentAnnualHint">AED / год · продавец → покупатель</span>
         </div>
       </div>
       <div class="subhead">Сервисный сбор</div>
@@ -618,7 +627,7 @@ const DEFAULTS = {
   sellerCommPct:2, sellerConvFee:5250, lateFee:0, nocFee:5250, assignmentFeePct:0,
   hasMortgage:false, loanPct:50, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
   dldMortgageFixed:290, insuranceYearly:2500,
-  isRented:false, dealDate:"", leaseStart:"", leaseEnd:"", rentAnnual:"",
+  isRented:false, rentPrepaid:true, dealDate:"", leaseStart:"", leaseEnd:"", rentAnnual:"",
   scArea:"", scRate:"", scPrepaidUntil:"", securityDeposit:""
 };
 
@@ -727,20 +736,23 @@ function recompute(){
     el('scRate').value = '';
     el('scPrepaidUntil').value = '';
     el('securityDeposit').value = '';
+    el('rentPrepaid').checked = true;
     ['dealDate','leaseStart','leaseEnd','rentAnnual','scArea','scRate','scPrepaidUntil'].forEach(clearNeed);
   }
+  const rentPrepaid = isRented && el('rentPrepaid').checked;
+  el('rentPrepaidLabel').textContent = el('rentPrepaid').checked ? 'Да' : 'Нет';
   const dealDate = isRented ? parseDate('dealDate') : null;
   const leaseStart = isRented ? parseDate('leaseStart') : null;
   const leaseEnd = isRented ? parseDate('leaseEnd') : null;
   const scPrepaidUntil = isRented ? parseDate('scPrepaidUntil') : null;
-  const rentDays = isRented ? daysRemaining(dealDate, leaseEnd) : 0;
+  const rentDays = (isRented && rentPrepaid) ? daysRemaining(dealDate, leaseEnd) : 0;
   const scDays = isRented ? daysRemaining(dealDate, scPrepaidUntil) : 0;
-  const rentAnnual = isRented ? Math.max(num('rentAnnual'), 0) : 0;
+  const rentAnnual = (isRented && rentPrepaid) ? Math.max(num('rentAnnual'), 0) : 0;
   const scArea = isRented ? Math.max(num('scArea'), 0) : 0;
   const scRate = isRented ? Math.max(num('scRate'), 0) : 0;
   const scAnnual = scArea * scRate;
   const prepaidSc = isRented ? prorateAnnual(scAnnual, scDays) : 0;
-  const prepaidRent = isRented ? prorateAnnual(rentAnnual, rentDays) : 0;
+  const prepaidRent = (isRented && rentPrepaid) ? prorateAnnual(rentAnnual, rentDays) : 0;
   const securityDeposit = isRented ? Math.max(num('securityDeposit'), 0) : 0;
 
   const bankFeePct = num('bankFeePct');
@@ -795,7 +807,7 @@ function recompute(){
     paidAmount, remainToDev, toSeller, buyerTotal, buyerCostsPct, buyerCashForUnit,
     bdDev, bdSeller, bdSc, bdRent, bdDeposit, bdAgency, bdDld, bdBank, bdTotal,
     hasMortgage, loanPct, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
-    isRented, dealDate: el('dealDate').value, leaseStart: el('leaseStart').value, leaseEnd: el('leaseEnd').value,
+    isRented, rentPrepaid, dealDate: el('dealDate').value, leaseStart: el('leaseStart').value, leaseEnd: el('leaseEnd').value,
     scArea, scRate, scAnnual, rentAnnual, rentDays, scDays, prepaidSc, prepaidRent, securityDeposit,
     sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerTotal, sellerCostsPct,
     sdExportDev, sdExportAgency, sdExportOther,
@@ -825,29 +837,40 @@ function recompute(){
     markNeed('dealDate', isFilledDate('dealDate'));
     markNeed('leaseStart', isFilledDate('leaseStart'));
     markNeed('leaseEnd', isFilledDate('leaseEnd'));
-    markNeed('rentAnnual', isFilledNum('rentAnnual'));
+    if (rentPrepaid) markNeed('rentAnnual', isFilledNum('rentAnnual'));
+    else clearNeed('rentAnnual');
     markNeed('scArea', isFilledNum('scArea'));
     markNeed('scRate', isFilledNum('scRate'));
     markNeed('scPrepaidUntil', isFilledDate('scPrepaidUntil'));
     setText('scAnnualDisplay', scAnnual > 0 ? fmt(scAnnual) : '—');
     setText('r_scProrate', fmt(prepaidSc));
-    setText('r_rentProrate', fmt(prepaidRent));
+    setText('r_rentProrate', rentPrepaid ? fmt(prepaidRent) : '0 AED');
     setText('r_scProrateLabel', scDays > 0
       ? ('SC prorata · buyer→seller · ' + scDays + ' дн.')
       : 'SC prorata · buyer→seller');
-    setText('r_rentProrateLabel', rentDays > 0
-      ? ('Rent prorata · seller→buyer · ' + rentDays + ' дн.')
-      : 'Rent prorata · seller→buyer');
-    let rentHint = 'неиспользованные дни: сделка → конец, включительно';
-    if (dealDate && leaseEnd) {
+    setText('r_rentProrateLabel', !rentPrepaid
+      ? 'Rent prorata · seller→buyer · не предоплачена'
+      : (rentDays > 0
+        ? ('Rent prorata · seller→buyer · ' + rentDays + ' дн.')
+        : 'Rent prorata · seller→buyer'));
+    let rentHint = rentPrepaid
+      ? 'неиспользованные дни: сделка → конец, включительно'
+      : 'помесячно / не предоплачена — возврат 0';
+    if (rentPrepaid && dealDate && leaseEnd) {
       rentHint = rentDays > 0
         ? (rentDays + ' дн. включительно · daily = год / 365')
         : 'сделка после конца контракта · 0 дн.';
     }
-    if (leaseStart && leaseEnd && leaseEnd < leaseStart) {
+    if (rentPrepaid && leaseStart && leaseEnd && leaseEnd < leaseStart) {
       rentHint = 'окончание раньше начала контракта';
     }
     setText('rentDaysHint', rentHint);
+    setText('rentAnnualHint', rentPrepaid
+      ? 'AED / год · продавец → покупатель'
+      : 'не используется, если аренда не предоплачена');
+    setText('rentPrepaidCaption', rentPrepaid
+      ? 'Неиспользованная предоплата: с дня сделки до конца контракта, включительно.'
+      : 'Помесячно / не предоплачена — возврат аренды 0, строка в экспорт не попадает.');
     let scHint = 'неиспользованные дни: сделка → эта дата, включительно';
     if (dealDate && scPrepaidUntil) {
       scHint = scDays > 0
@@ -954,6 +977,7 @@ function applyDefaults(){
   el('hasMortgage').checked = DEFAULTS.hasMortgage;
   el('loanPct').value = DEFAULTS.loanPct;
   el('isRented').checked = DEFAULTS.isRented;
+  el('rentPrepaid').checked = DEFAULTS.rentPrepaid;
   el('dealDate').value = DEFAULTS.dealDate;
   el('leaseStart').value = DEFAULTS.leaseStart;
   el('leaseEnd').value = DEFAULTS.leaseEnd;

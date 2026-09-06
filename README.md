@@ -20,9 +20,12 @@ No raw refund-AED field. No primary remaining-days field. Inputs:
 
 **Rent**
 
+- Toggle **«аренда предоплачена до конца контракта»** (default ON when rented)
 - Начало контракта
 - Окончание контракта
-- Аренда в год (AED/year)
+- Аренда в год (AED/year) — used only if prepaid ON
+
+If the toggle is OFF (monthly / not prepaid), rent refund is **0**. Do not invent a rent line.
 
 **Service charge**
 
@@ -51,7 +54,7 @@ Directions:
 - Rent prorata: seller → buyer
 - Deposit: → buyer
 
-Required when rented ON (amber empty / green filled): lease start, lease end, deal date, annual rent, area, SC rate, SC prepaid until. Deposit optional.
+Required when rented ON (amber empty / green filled): lease start, lease end, deal date, area, SC rate, SC prepaid until. Annual rent required only if prepaid toggle is ON. Deposit optional.
 
 Derived refunds and day counts show on screen. Toggle **off**: fields hide and clear, no WhatsApp lines.
 
@@ -74,7 +77,8 @@ WhatsApp / text — separate lines only if amount > 0:
 3. «В аренде» on. Required fields start amber; they turn green when filled.
    - День сделки `2026-01-01`
    - Начало контракта `2025-06-01`, окончание `2026-01-10`
-   - Аренда в год `73000` → **10** дн. → rent **2 000** seller→buyer
+   - Предоплата аренды ON, аренда в год `73000` → **10** дн. → rent **2 000** seller→buyer
+   - Toggle предоплаты OFF → rent **0**, no rent export line
    - Площадь `1000`, ставка SC `36.5` → SC в год **36 500**
    - SC оплачен до `2026-01-10` → **10** дн. → SC **1 000** buyer→seller
    - Депозит `10000` → buyer
