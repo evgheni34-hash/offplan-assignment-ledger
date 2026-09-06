@@ -12,12 +12,36 @@ Buyer mortgage is **LTV % of deal price**. Implied loan = deal price × %. Bank 
 
 ## Prorata when «в аренде» is ON
 
-No raw refund-AED field for SC or rent. Inputs:
+No raw refund-AED field. No primary remaining-days field. Inputs:
 
-- Annual service charge (AED/year)
-- Annual rent (AED/year)
-- Remaining days, **or** transfer date + prepaid-through date (remaining days derived, inclusive)
-- Security deposit (absolute AED → buyer)
+**Shared**
+
+- День сделки / передачи (used for both rent and SC)
+
+**Rent**
+
+- Toggle **«аренда предоплачена до конца контракта»** (default ON when rented)
+- Начало контракта
+- Окончание контракта
+- Аренда в год (AED/year) — used only if prepaid ON
+
+If the toggle is OFF (monthly / not prepaid), rent refund is **0**. Do not invent a rent line.
+
+**Service charge**
+
+- Площадь, кв. фут
+- Ставка SC (AED / sq ft / year)
+- Derived **SC в год** = area × rate (read-only)
+- SC оплачен до
+
+**Deposit**
+
+- Security deposit (absolute AED → buyer, optional)
+
+Remaining days (inclusive):
+
+- Rent: deal date through lease end (0 if deal > lease end)
+- SC: deal date through SC prepaid-until (0 if deal past prepaid-until)
 
 Formula (365-day year, not 365.25):
 
@@ -30,7 +54,9 @@ Directions:
 - Rent prorata: seller → buyer
 - Deposit: → buyer
 
-Derived refunds show on screen. Toggle **off**: fields hide and zero, no WhatsApp lines.
+Required when rented ON (amber empty / green filled): lease start, lease end, deal date, area, SC rate, SC prepaid until. Annual rent required only if prepaid toggle is ON. Deposit optional.
+
+Derived refunds and day counts show on screen. Toggle **off**: fields hide and clear, no WhatsApp lines.
 
 WhatsApp / text — separate lines only if amount > 0:
 
@@ -48,6 +74,14 @@ WhatsApp / text — separate lines only if amount > 0:
 
 1. Open the live URL. No paywall. Export many times — always free.
 2. Mortgage on: 50% of 1 195 000 = **597 500 AED**; 40% → 478 000; 60% → 717 000.
-3. «В аренде» on. SC year `36500`, rent year `73000`, remaining days `10` → SC **1 000** buyer→seller, rent **2 000** seller→buyer. Or handover `2026-01-01` + prepaid through `2026-01-10` → same 10 days. Deposit `10000` → buyer.
-4. Toggle off — SC/rent/deposit gone from ledgers and text.
-5. Seller card has no «Разбивка». Seller text has no NOC/agency «Кому и сколько».
+3. «В аренде» on. Required fields start amber; they turn green when filled.
+   - День сделки `2026-01-01`
+   - Начало контракта `2025-06-01`, окончание `2026-01-10`
+   - Предоплата аренды ON, аренда в год `73000` → **10** дн. → rent **2 000** seller→buyer
+   - Toggle предоплаты OFF → rent **0**, no rent export line
+   - Площадь `1000`, ставка SC `36.5` → SC в год **36 500**
+   - SC оплачен до `2026-01-10` → **10** дн. → SC **1 000** buyer→seller
+   - Депозит `10000` → buyer
+4. If день сделки `2026-01-11` (after lease end / SC prepaid) → both refunds **0**.
+5. Toggle off — SC/rent/deposit gone from ledgers and text.
+6. Seller card has no «Разбивка». Seller text has no NOC/agency «Кому и сколько».
