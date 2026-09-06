@@ -136,19 +136,6 @@ body{
 .field .unitwrap{position:relative;}
 .field .unitwrap input{padding-right:26px;}
 .field .unitwrap .unit{position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:12px; font-family:"IBM Plex Mono",monospace; pointer-events:none;}
-.field.need input.is-empty{
-  border-color:#C9A227;
-  background:color-mix(in srgb, #E8B84A 18%, var(--surface-2));
-}
-.field.need input.is-filled{
-  border-color:#2F9E64;
-  background:color-mix(in srgb, #1E8A5C 14%, var(--surface-2));
-}
-.field.need input.is-empty:focus-visible,
-.field.need input.is-filled:focus-visible{
-  border-color:var(--accent);
-  background:var(--surface);
-}
 .field .readonly{
   width:100%; font-family:"IBM Plex Mono",monospace; font-size:13.5px;
   background:var(--surface-2); border:1px solid var(--rule); border-radius:7px;
@@ -301,7 +288,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
     </div>
     <div id="rentFields" hidden>
       <div class="params-grid" style="margin-top:12px;">
-        <div class="field need">
+        <div class="field">
           <label for="dealDate">День сделки / передачи</label>
           <input type="date" id="dealDate">
           <span class="hint">общий день для аренды и SC</span>
@@ -318,17 +305,17 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       </div>
       <p class="row-caption" id="rentPrepaidCaption">Если нет (помесячно) — возврат аренды 0, строка не выдумывается.</p>
       <div class="params-grid">
-        <div class="field need">
+        <div class="field">
           <label for="leaseStart">Начало контракта</label>
           <input type="date" id="leaseStart">
           <span class="hint">когда начался контракт</span>
         </div>
-        <div class="field need">
+        <div class="field">
           <label for="leaseEnd">Окончание контракта</label>
           <input type="date" id="leaseEnd">
           <span class="hint" id="rentDaysHint">неиспользованные дни: сделка → конец</span>
         </div>
-        <div class="field need" id="rentAnnualField">
+        <div class="field" id="rentAnnualField">
           <label for="rentAnnual">Аренда в год</label>
           <input type="number" id="rentAnnual" value="" step="1" min="0">
           <span class="hint" id="rentAnnualHint">AED / год · продавец → покупатель</span>
@@ -336,12 +323,12 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
       </div>
       <div class="subhead">Сервисный сбор</div>
       <div class="params-grid">
-        <div class="field need">
+        <div class="field">
           <label for="scArea">Площадь, кв. фут</label>
           <input type="number" id="scArea" value="" step="0.01" min="0">
           <span class="hint">квадратные футы</span>
         </div>
-        <div class="field need">
+        <div class="field">
           <label for="scRate">Ставка SC</label>
           <div class="unitwrap"><input type="number" id="scRate" value="" step="0.01" min="0"><span class="unit">AED</span></div>
           <span class="hint">AED / кв. фут / год</span>
@@ -351,7 +338,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
           <div class="readonly" id="scAnnualDisplay">—</div>
           <span class="hint">площадь × ставка · только расчёт</span>
         </div>
-        <div class="field need">
+        <div class="field">
           <label for="scPrepaidUntil">SC оплачен до</label>
           <input type="date" id="scPrepaidUntil">
           <span class="hint" id="scDaysHint">неиспользованные дни: сделка → эта дата</span>
@@ -693,19 +680,6 @@ function isFilledDate(id){
   return !!parseDate(id);
 }
 
-function markNeed(id, filled){
-  const input = el(id);
-  if (!input) return;
-  input.classList.toggle('is-empty', !filled);
-  input.classList.toggle('is-filled', !!filled);
-}
-
-function clearNeed(id){
-  const input = el(id);
-  if (!input) return;
-  input.classList.remove('is-empty', 'is-filled');
-}
-
 function fmt(v){
   const r = Math.round(v);
   const s = Math.abs(r).toLocaleString('ru-RU');
@@ -761,7 +735,6 @@ function recompute(){
     el('scPrepaidUntil').value = '';
     el('securityDeposit').value = '';
     el('rentPrepaid').checked = true;
-    ['dealDate','leaseStart','leaseEnd','rentAnnual','scArea','scRate','scPrepaidUntil'].forEach(clearNeed);
   }
   const rentPrepaid = isRented && el('rentPrepaid').checked;
   el('rentPrepaidLabel').textContent = el('rentPrepaid').checked ? 'Да' : 'Нет';
@@ -858,14 +831,6 @@ function recompute(){
     ? '= ' + fmt(loanAmount) + ' (цена × ' + fmtPct(loanPct, 0) + ')'
     : 'например 40 / 50 / 60');
   if (isRented) {
-    markNeed('dealDate', isFilledDate('dealDate'));
-    markNeed('leaseStart', isFilledDate('leaseStart'));
-    markNeed('leaseEnd', isFilledDate('leaseEnd'));
-    if (rentPrepaid) markNeed('rentAnnual', isFilledNum('rentAnnual'));
-    else clearNeed('rentAnnual');
-    markNeed('scArea', isFilledNum('scArea'));
-    markNeed('scRate', isFilledNum('scRate'));
-    markNeed('scPrepaidUntil', isFilledDate('scPrepaidUntil'));
     setText('scAnnualDisplay', scAnnual > 0 ? fmt(scAnnual) : '—');
     setText('r_scProrate', fmt(prepaidSc));
     setText('r_rentProrate', rentPrepaid ? fmt(prepaidRent) : '0 AED');
@@ -1016,28 +981,14 @@ function updateRequiredFields(){
   markRequired('paidPct', true, hasNum('paidPct'));
   markRequired('holdingMonths', true, hasNum('holdingMonths') && parseFloat(rawVal('holdingMonths')) > 0);
   markRequired('loanPct', hasMortgage, hasMortgage && hasNum('loanPct'));
-  markRequired('scAnnual', isRented, isRented && hasNum('scAnnual'));
-  markRequired('rentAnnual', isRented, isRented && hasNum('rentAnnual'));
-
-  const daysOk = isRented && hasNum('remainingDays') && parseFloat(rawVal('remainingDays')) > 0;
-  const datesFilled = isRented && rawVal('handoverDate') !== '' && rawVal('prepaidUntil') !== '';
-  if (!isRented) {
-    markRequired('remainingDays', false, false);
-    markRequired('handoverDate', false, false);
-    markRequired('prepaidUntil', false, false);
-  } else if (daysOk) {
-    markRequired('remainingDays', true, true);
-    markRequired('handoverDate', false, false);
-    markRequired('prepaidUntil', false, false);
-  } else if (datesFilled) {
-    markRequired('remainingDays', false, false);
-    markRequired('handoverDate', true, true);
-    markRequired('prepaidUntil', true, true);
-  } else {
-    markRequired('remainingDays', true, false);
-    markRequired('handoverDate', true, rawVal('handoverDate') !== '');
-    markRequired('prepaidUntil', true, rawVal('prepaidUntil') !== '');
-  }
+  const rentPrepaid = isRented && el('rentPrepaid') && el('rentPrepaid').checked;
+  markRequired('dealDate', isRented, isRented && isFilledDate('dealDate'));
+  markRequired('leaseStart', isRented, isRented && isFilledDate('leaseStart'));
+  markRequired('leaseEnd', isRented, isRented && isFilledDate('leaseEnd'));
+  markRequired('rentAnnual', rentPrepaid, rentPrepaid && isFilledNum('rentAnnual'));
+  markRequired('scArea', isRented, isRented && isFilledNum('scArea'));
+  markRequired('scRate', isRented, isRented && isFilledNum('scRate'));
+  markRequired('scPrepaidUntil', isRented, isRented && isFilledDate('scPrepaidUntil'));
 }
 
 function applyDefaults(){
