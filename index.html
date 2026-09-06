@@ -112,6 +112,24 @@ body{
 .field .unitwrap{position:relative;}
 .field .unitwrap input{padding-right:26px;}
 .field .unitwrap .unit{position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:12px; font-family:"IBM Plex Mono",monospace; pointer-events:none;}
+.field.need input.is-empty{
+  border-color:#C9A227;
+  background:color-mix(in srgb, #E8B84A 18%, var(--surface-2));
+}
+.field.need input.is-filled{
+  border-color:#2F9E64;
+  background:color-mix(in srgb, #1E8A5C 14%, var(--surface-2));
+}
+.field.need input.is-empty:focus-visible,
+.field.need input.is-filled:focus-visible{
+  border-color:var(--accent);
+  background:var(--surface);
+}
+.field .readonly{
+  width:100%; font-family:"IBM Plex Mono",monospace; font-size:13.5px;
+  background:var(--surface-2); border:1px solid var(--rule); border-radius:7px;
+  padding:8px 10px; color:var(--ink); min-height:38px;
+}
 
 .ledgers{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}
 @media (max-width:820px){ .ledgers{grid-template-columns:1fr;} .tiles{grid-template-columns:repeat(2,1fr);} }
@@ -259,41 +277,67 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
     </div>
     <div id="rentFields" hidden>
       <div class="params-grid" style="margin-top:12px;">
-        <div class="field">
-          <label for="scAnnual">SC в год</label>
-          <input type="number" id="scAnnual" value="0" step="1" min="0">
-          <span class="hint">AED / year · prorata buyer→seller</span>
+        <div class="field need">
+          <label for="dealDate">День сделки / передачи</label>
+          <input type="date" id="dealDate">
+          <span class="hint">общий день для аренды и SC</span>
         </div>
-        <div class="field">
+      </div>
+      <div class="subhead">Аренда</div>
+      <div class="params-grid">
+        <div class="field need">
+          <label for="leaseStart">Начало контракта</label>
+          <input type="date" id="leaseStart">
+          <span class="hint">когда начался контракт</span>
+        </div>
+        <div class="field need">
+          <label for="leaseEnd">Окончание контракта</label>
+          <input type="date" id="leaseEnd">
+          <span class="hint" id="rentDaysHint">неиспользованные дни: сделка → конец</span>
+        </div>
+        <div class="field need">
           <label for="rentAnnual">Аренда в год</label>
-          <input type="number" id="rentAnnual" value="0" step="1" min="0">
-          <span class="hint">AED / year · prorata seller→buyer</span>
+          <input type="number" id="rentAnnual" value="" step="1" min="0">
+          <span class="hint">AED / год · продавец → покупатель</span>
+        </div>
+      </div>
+      <div class="subhead">Сервисный сбор</div>
+      <div class="params-grid">
+        <div class="field need">
+          <label for="scArea">Площадь, кв. фут</label>
+          <input type="number" id="scArea" value="" step="0.01" min="0">
+          <span class="hint">квадратные футы</span>
+        </div>
+        <div class="field need">
+          <label for="scRate">Ставка SC</label>
+          <div class="unitwrap"><input type="number" id="scRate" value="" step="0.01" min="0"><span class="unit">AED</span></div>
+          <span class="hint">AED / кв. фут / год</span>
         </div>
         <div class="field">
-          <label for="handoverDate">Дата передачи</label>
-          <input type="date" id="handoverDate">
+          <label for="scAnnualDisplay">SC в год</label>
+          <div class="readonly" id="scAnnualDisplay">—</div>
+          <span class="hint">площадь × ставка · только расчёт</span>
         </div>
-        <div class="field">
-          <label for="prepaidUntil">Prepaid до</label>
-          <input type="date" id="prepaidUntil">
+        <div class="field need">
+          <label for="scPrepaidUntil">SC оплачен до</label>
+          <input type="date" id="scPrepaidUntil">
+          <span class="hint" id="scDaysHint">неиспользованные дни: сделка → эта дата</span>
         </div>
-        <div class="field">
-          <label for="remainingDays">Осталось дней</label>
-          <input type="number" id="remainingDays" value="0" step="1" min="0">
-          <span class="hint" id="prorateDaysHint">или из дат; daily = год / 365</span>
-        </div>
+      </div>
+      <div class="subhead">Депозит</div>
+      <div class="params-grid">
         <div class="field">
           <label for="securityDeposit">Депозит (security deposit)</label>
-          <input type="number" id="securityDeposit" value="0" step="1" min="0">
-          <span class="hint">абсолют AED · → покупатель</span>
+          <input type="number" id="securityDeposit" value="" step="1" min="0">
+          <span class="hint">абсолют AED · → покупатель · необязательно</span>
         </div>
       </div>
       <div class="ledger-row" style="margin-top:4px;">
-        <span class="label">SC prorata · buyer→seller</span>
+        <span class="label" id="r_scProrateLabel">SC prorata · buyer→seller</span>
         <span class="computed" id="r_scProrate">—</span>
       </div>
       <div class="ledger-row">
-        <span class="label">Rent prorata · seller→buyer</span>
+        <span class="label" id="r_rentProrateLabel">Rent prorata · seller→buyer</span>
         <span class="computed" id="r_rentProrate">—</span>
       </div>
     </div>
@@ -574,8 +618,8 @@ const DEFAULTS = {
   sellerCommPct:2, sellerConvFee:5250, lateFee:0, nocFee:5250, assignmentFeePct:0,
   hasMortgage:false, loanPct:50, bankFeePct:1, valuationFee:3000, dldMortgagePct:0.25,
   dldMortgageFixed:290, insuranceYearly:2500,
-  isRented:false, scAnnual:0, rentAnnual:0, handoverDate:"", prepaidUntil:"",
-  remainingDays:0, securityDeposit:0
+  isRented:false, dealDate:"", leaseStart:"", leaseEnd:"", rentAnnual:"",
+  scArea:"", scRate:"", scPrepaidUntil:"", securityDeposit:""
 };
 
 function el(id){ return document.getElementById(id); }
@@ -601,14 +645,32 @@ function prorateAnnual(annual, days){
   return annual / 365 * days;
 }
 
-function remainingFor(untilId, daysId, handover){
-  const until = parseDate(untilId);
-  if (handover && until) {
-    const days = daysRemaining(handover, until);
-    if (document.activeElement !== el(daysId)) el(daysId).value = days;
-    return days;
-  }
-  return Math.max(0, num(daysId));
+function hasValue(id){
+  const v = el(id).value;
+  return v !== '' && v !== null && v !== undefined;
+}
+
+function isFilledNum(id){
+  if (!hasValue(id)) return false;
+  const n = parseFloat(el(id).value);
+  return isFinite(n) && n > 0;
+}
+
+function isFilledDate(id){
+  return !!parseDate(id);
+}
+
+function markNeed(id, filled){
+  const input = el(id);
+  if (!input) return;
+  input.classList.toggle('is-empty', !filled);
+  input.classList.toggle('is-filled', !!filled);
+}
+
+function clearNeed(id){
+  const input = el(id);
+  if (!input) return;
+  input.classList.remove('is-empty', 'is-filled');
 }
 
 function fmt(v){
@@ -657,18 +719,28 @@ function recompute(){
   el('rentFields').hidden = !isRented;
   el('rentedStateLabel').textContent = isRented ? 'Да' : 'Нет';
   if (!isRented) {
-    el('scAnnual').value = 0;
-    el('rentAnnual').value = 0;
-    el('handoverDate').value = '';
-    el('prepaidUntil').value = '';
-    el('remainingDays').value = 0;
-    el('securityDeposit').value = 0;
+    el('dealDate').value = '';
+    el('leaseStart').value = '';
+    el('leaseEnd').value = '';
+    el('rentAnnual').value = '';
+    el('scArea').value = '';
+    el('scRate').value = '';
+    el('scPrepaidUntil').value = '';
+    el('securityDeposit').value = '';
+    ['dealDate','leaseStart','leaseEnd','rentAnnual','scArea','scRate','scPrepaidUntil'].forEach(clearNeed);
   }
-  const remainingDays = isRented ? remainingFor('prepaidUntil', 'remainingDays', parseDate('handoverDate')) : 0;
-  const scAnnual = isRented ? Math.max(num('scAnnual'), 0) : 0;
+  const dealDate = isRented ? parseDate('dealDate') : null;
+  const leaseStart = isRented ? parseDate('leaseStart') : null;
+  const leaseEnd = isRented ? parseDate('leaseEnd') : null;
+  const scPrepaidUntil = isRented ? parseDate('scPrepaidUntil') : null;
+  const rentDays = isRented ? daysRemaining(dealDate, leaseEnd) : 0;
+  const scDays = isRented ? daysRemaining(dealDate, scPrepaidUntil) : 0;
   const rentAnnual = isRented ? Math.max(num('rentAnnual'), 0) : 0;
-  const prepaidSc = isRented ? prorateAnnual(scAnnual, remainingDays) : 0;
-  const prepaidRent = isRented ? prorateAnnual(rentAnnual, remainingDays) : 0;
+  const scArea = isRented ? Math.max(num('scArea'), 0) : 0;
+  const scRate = isRented ? Math.max(num('scRate'), 0) : 0;
+  const scAnnual = scArea * scRate;
+  const prepaidSc = isRented ? prorateAnnual(scAnnual, scDays) : 0;
+  const prepaidRent = isRented ? prorateAnnual(rentAnnual, rentDays) : 0;
   const securityDeposit = isRented ? Math.max(num('securityDeposit'), 0) : 0;
 
   const bankFeePct = num('bankFeePct');
@@ -723,7 +795,8 @@ function recompute(){
     paidAmount, remainToDev, toSeller, buyerTotal, buyerCostsPct, buyerCashForUnit,
     bdDev, bdSeller, bdSc, bdRent, bdDeposit, bdAgency, bdDld, bdBank, bdTotal,
     hasMortgage, loanPct, loanAmount, bankFeePct, bankFee, valuationFee, dldMortgagePct, dldMortgageFee, dldMortgageFixed, mortgageTotal, insuranceYearly,
-    isRented, scAnnual, rentAnnual, remainingDays, prepaidSc, prepaidRent, securityDeposit,
+    isRented, dealDate: el('dealDate').value, leaseStart: el('leaseStart').value, leaseEnd: el('leaseEnd').value,
+    scArea, scRate, scAnnual, rentAnnual, rentDays, scDays, prepaidSc, prepaidRent, securityDeposit,
     sellerCommPct, sellerComm, sellerConvFee, lateFee, nocFee, assignmentFeePct, assignmentFee, sellerTotal, sellerCostsPct,
     sdExportDev, sdExportAgency, sdExportOther,
     netProceeds, netProfit, roi, roiAnn, totalComm, combinedPct
@@ -749,11 +822,43 @@ function recompute(){
     ? '= ' + fmt(loanAmount) + ' (цена × ' + fmtPct(loanPct, 0) + ')'
     : 'например 40 / 50 / 60');
   if (isRented) {
+    markNeed('dealDate', isFilledDate('dealDate'));
+    markNeed('leaseStart', isFilledDate('leaseStart'));
+    markNeed('leaseEnd', isFilledDate('leaseEnd'));
+    markNeed('rentAnnual', isFilledNum('rentAnnual'));
+    markNeed('scArea', isFilledNum('scArea'));
+    markNeed('scRate', isFilledNum('scRate'));
+    markNeed('scPrepaidUntil', isFilledDate('scPrepaidUntil'));
+    setText('scAnnualDisplay', scAnnual > 0 ? fmt(scAnnual) : '—');
     setText('r_scProrate', fmt(prepaidSc));
     setText('r_rentProrate', fmt(prepaidRent));
-    setText('prorateDaysHint', remainingDays > 0
-      ? (remainingDays + ' дн. · daily = год / 365')
-      : 'даты или дни вручную · daily = год / 365');
+    setText('r_scProrateLabel', scDays > 0
+      ? ('SC prorata · buyer→seller · ' + scDays + ' дн.')
+      : 'SC prorata · buyer→seller');
+    setText('r_rentProrateLabel', rentDays > 0
+      ? ('Rent prorata · seller→buyer · ' + rentDays + ' дн.')
+      : 'Rent prorata · seller→buyer');
+    let rentHint = 'неиспользованные дни: сделка → конец, включительно';
+    if (dealDate && leaseEnd) {
+      rentHint = rentDays > 0
+        ? (rentDays + ' дн. включительно · daily = год / 365')
+        : 'сделка после конца контракта · 0 дн.';
+    }
+    if (leaseStart && leaseEnd && leaseEnd < leaseStart) {
+      rentHint = 'окончание раньше начала контракта';
+    }
+    setText('rentDaysHint', rentHint);
+    let scHint = 'неиспользованные дни: сделка → эта дата, включительно';
+    if (dealDate && scPrepaidUntil) {
+      scHint = scDays > 0
+        ? (scDays + ' дн. включительно · daily = год / 365')
+        : 'сделка после оплаты SC · 0 дн.';
+    }
+    setText('scDaysHint', scHint);
+  } else {
+    setText('scAnnualDisplay', '—');
+    setText('r_scProrateLabel', 'SC prorata · buyer→seller');
+    setText('r_rentProrateLabel', 'Rent prorata · seller→buyer');
   }
 
   setText('bd_dev_label', 'Остаток по рассрочке — ' + propName);
@@ -849,11 +954,13 @@ function applyDefaults(){
   el('hasMortgage').checked = DEFAULTS.hasMortgage;
   el('loanPct').value = DEFAULTS.loanPct;
   el('isRented').checked = DEFAULTS.isRented;
-  el('scAnnual').value = DEFAULTS.scAnnual;
+  el('dealDate').value = DEFAULTS.dealDate;
+  el('leaseStart').value = DEFAULTS.leaseStart;
+  el('leaseEnd').value = DEFAULTS.leaseEnd;
   el('rentAnnual').value = DEFAULTS.rentAnnual;
-  el('handoverDate').value = DEFAULTS.handoverDate;
-  el('prepaidUntil').value = DEFAULTS.prepaidUntil;
-  el('remainingDays').value = DEFAULTS.remainingDays;
+  el('scArea').value = DEFAULTS.scArea;
+  el('scRate').value = DEFAULTS.scRate;
+  el('scPrepaidUntil').value = DEFAULTS.scPrepaidUntil;
   el('securityDeposit').value = DEFAULTS.securityDeposit;
   el('bankFeePct').value = DEFAULTS.bankFeePct;
   el('valuationFee').value = DEFAULTS.valuationFee;
