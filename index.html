@@ -109,6 +109,30 @@ body{
 }
 .field input[type=text]{font-family:"IBM Plex Sans",sans-serif;}
 .field input:focus-visible{outline:none; border-color:var(--accent); background:var(--surface);}
+.field.field-required.is-empty input[type=text],
+.field.field-required.is-empty input[type=number],
+.field.field-required.is-empty input[type=date]{
+  border-color: color-mix(in srgb, var(--accent) 70%, var(--rule));
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.field.field-required.is-filled input[type=text],
+.field.field-required.is-filled input[type=number],
+.field.field-required.is-filled input[type=date]{
+  border-color: color-mix(in srgb, var(--profit) 65%, var(--rule));
+  background: var(--profit-soft);
+  box-shadow: inset 3px 0 0 var(--profit);
+}
+.field.field-required.is-empty input:focus-visible{
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 3px 0 0 var(--accent), 0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.field.field-required.is-filled input:focus-visible{
+  border-color: var(--profit);
+  background: var(--profit-soft);
+  box-shadow: inset 3px 0 0 var(--profit), 0 0 0 2px color-mix(in srgb, var(--profit) 30%, transparent);
+}
 .field .unitwrap{position:relative;}
 .field .unitwrap input{padding-right:26px;}
 .field .unitwrap .unit{position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--ink-faint); font-size:12px; font-family:"IBM Plex Mono",monospace; pointer-events:none;}
@@ -814,6 +838,7 @@ function recompute(){
   setText('tileRoiAnn', 'аннуализ. ' + fmtPct(roiAnn));
   setText('tileCommission', fmt(totalComm));
   updateWhatsAppLinks();
+  updateRequiredFields();
 }
 
 function buildWhatsAppUrl(){
@@ -828,6 +853,63 @@ function updateWhatsAppLinks(){
   const foot = el('waCtaFooter');
   if (top) top.href = href;
   if (foot) foot.href = href;
+}
+
+function rawVal(id){
+  return (el(id).value || '').trim();
+}
+function hasNum(id){
+  const v = rawVal(id);
+  if (v === '') return false;
+  return Number.isFinite(parseFloat(v));
+}
+function markRequired(id, required, filled){
+  const input = el(id);
+  if (!input) return;
+  const field = input.closest('.field') || input;
+  if (!required) {
+    field.classList.remove('field-required', 'is-empty', 'is-filled');
+    input.removeAttribute('aria-required');
+    input.removeAttribute('aria-invalid');
+    return;
+  }
+  field.classList.add('field-required');
+  field.classList.toggle('is-empty', !filled);
+  field.classList.toggle('is-filled', !!filled);
+  input.setAttribute('aria-required', 'true');
+  input.setAttribute('aria-invalid', filled ? 'false' : 'true');
+}
+function updateRequiredFields(){
+  const hasMortgage = el('hasMortgage').checked;
+  const isRented = el('isRented').checked;
+  markRequired('propName', true, rawVal('propName') !== '');
+  markRequired('dealPrice', true, hasNum('dealPrice'));
+  markRequired('originalPrice', true, hasNum('originalPrice'));
+  markRequired('paidPct', true, hasNum('paidPct'));
+  markRequired('holdingMonths', true, hasNum('holdingMonths') && parseFloat(rawVal('holdingMonths')) > 0);
+  markRequired('loanPct', hasMortgage, hasMortgage && hasNum('loanPct'));
+  markRequired('scAnnual', isRented, isRented && hasNum('scAnnual'));
+  markRequired('rentAnnual', isRented, isRented && hasNum('rentAnnual'));
+
+  const daysOk = isRented && hasNum('remainingDays') && parseFloat(rawVal('remainingDays')) > 0;
+  const datesFilled = isRented && rawVal('handoverDate') !== '' && rawVal('prepaidUntil') !== '';
+  if (!isRented) {
+    markRequired('remainingDays', false, false);
+    markRequired('handoverDate', false, false);
+    markRequired('prepaidUntil', false, false);
+  } else if (daysOk) {
+    markRequired('remainingDays', true, true);
+    markRequired('handoverDate', false, false);
+    markRequired('prepaidUntil', false, false);
+  } else if (datesFilled) {
+    markRequired('remainingDays', false, false);
+    markRequired('handoverDate', true, true);
+    markRequired('prepaidUntil', true, true);
+  } else {
+    markRequired('remainingDays', true, false);
+    markRequired('handoverDate', true, rawVal('handoverDate') !== '');
+    markRequired('prepaidUntil', true, rawVal('prepaidUntil') !== '');
+  }
 }
 
 function applyDefaults(){
