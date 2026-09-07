@@ -222,7 +222,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
     </div>
     <div class="mast-actions">
       <a class="wa-cta" id="waCta" href="https://wa.me/971585668337" target="_blank" rel="noopener noreferrer">WhatsApp: разбор юнита</a>
-      <button class="reset-btn" id="resetBtn">Сбросить к примеру</button>
+      <button type="button" class="reset-btn" id="resetBtn" onclick="applyDefaults(event)">Вернуть демо</button>
     </div>
   </div>
 
@@ -242,7 +242,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
     <div class="tile">
       <div class="k">Доходность (ROI)</div>
       <div class="v" id="tileRoi">—</div>
-      <div class="sub" id="tileRoiAnn">аннуализ. —</div>
+      <div class="sub" id="tileRoiAnn">годовых —</div>
     </div>
     <div class="tile">
       <div class="k">Комиссия агентства всего</div>
@@ -579,7 +579,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
               <span class="val" id="p_roi">—</span>
             </div>
             <div class="econ-row">
-              <span>ROI, аннуализированная (линейно)</span>
+              <span>ROI, годовых (линейно)</span>
               <span class="val" id="p_roiAnn">—</span>
             </div>
             <div class="econ-row">
@@ -694,6 +694,7 @@ function setText(id, text){ el(id).textContent = text; }
 const DATE_STR = new Date().toLocaleDateString('ru-RU');
 
 let STATE = {};
+let restoringDemo = false;
 
 function recompute(){
   const dealPrice = num('dealPrice');
@@ -725,7 +726,7 @@ function recompute(){
   const isRented = el('isRented').checked;
   el('rentFields').hidden = !isRented;
   el('rentedStateLabel').textContent = isRented ? 'Да' : 'Нет';
-  if (!isRented) {
+  if (!isRented && !restoringDemo) {
     el('dealDate').value = '';
     el('leaseStart').value = '';
     el('leaseEnd').value = '';
@@ -928,7 +929,7 @@ function recompute(){
   const roiTile = el('tileRoi');
   roiTile.textContent = fmtPct(roi);
   roiTile.className = 'v ' + (roi < 0 ? 'cost' : 'profit');
-  setText('tileRoiAnn', 'аннуализ. ' + fmtPct(roiAnn));
+  setText('tileRoiAnn', 'годовых ' + fmtPct(roiAnn));
   setText('tileCommission', fmt(totalComm));
   updateWhatsAppLinks();
   updateRequiredFields();
@@ -991,47 +992,70 @@ function updateRequiredFields(){
   markRequired('scPrepaidUntil', isRented, isRented && isFilledDate('scPrepaidUntil'));
 }
 
-function applyDefaults(){
-  el('propName').value = DEFAULTS.propName;
-  el('dealPrice').value = DEFAULTS.dealPrice;
-  el('originalPrice').value = DEFAULTS.originalPrice;
-  el('paidPct').value = DEFAULTS.paidPct;
-  el('holdingMonths').value = DEFAULTS.holdingMonths;
-  el('dldPct').value = DEFAULTS.dldPct;
-  el('titleDeedFee').value = DEFAULTS.titleDeedFee;
-  el('trusteeFee').value = DEFAULTS.trusteeFee;
-  el('buyerCommPct').value = DEFAULTS.buyerCommPct;
-  el('buyerConvFee').value = DEFAULTS.buyerConvFee;
-  el('sellerCommPct').value = DEFAULTS.sellerCommPct;
-  el('sellerConvFee').value = DEFAULTS.sellerConvFee;
-  el('lateFee').value = DEFAULTS.lateFee;
-  el('nocFee').value = DEFAULTS.nocFee;
-  el('assignmentFeePct').value = DEFAULTS.assignmentFeePct;
-  el('hasMortgage').checked = DEFAULTS.hasMortgage;
-  el('loanPct').value = DEFAULTS.loanPct;
-  el('isRented').checked = DEFAULTS.isRented;
-  el('rentPrepaid').checked = DEFAULTS.rentPrepaid;
-  el('dealDate').value = DEFAULTS.dealDate;
-  el('leaseStart').value = DEFAULTS.leaseStart;
-  el('leaseEnd').value = DEFAULTS.leaseEnd;
-  el('rentAnnual').value = DEFAULTS.rentAnnual;
-  el('scArea').value = DEFAULTS.scArea;
-  el('scRate').value = DEFAULTS.scRate;
-  el('scPrepaidUntil').value = DEFAULTS.scPrepaidUntil;
-  el('securityDeposit').value = DEFAULTS.securityDeposit;
-  el('bankFeePct').value = DEFAULTS.bankFeePct;
-  el('valuationFee').value = DEFAULTS.valuationFee;
-  el('dldMortgagePct').value = DEFAULTS.dldMortgagePct;
-  el('dldMortgageFixed').value = DEFAULTS.dldMortgageFixed;
-  el('insuranceYearly').value = DEFAULTS.insuranceYearly;
-  recompute();
+function setInputValue(id, value){
+  const node = el(id);
+  if (!node) return;
+  node.value = value === undefined || value === null ? '' : value;
+}
+
+function setChecked(id, value){
+  const node = el(id);
+  if (!node) return;
+  node.checked = !!value;
+}
+
+function applyDefaults(e){
+  if (e && e.preventDefault) e.preventDefault();
+  restoringDemo = true;
+  try {
+    setInputValue('propName', DEFAULTS.propName);
+    setInputValue('dealPrice', DEFAULTS.dealPrice);
+    setInputValue('originalPrice', DEFAULTS.originalPrice);
+    setInputValue('paidPct', DEFAULTS.paidPct);
+    setInputValue('holdingMonths', DEFAULTS.holdingMonths);
+    setInputValue('dldPct', DEFAULTS.dldPct);
+    setInputValue('titleDeedFee', DEFAULTS.titleDeedFee);
+    setInputValue('trusteeFee', DEFAULTS.trusteeFee);
+    setInputValue('buyerCommPct', DEFAULTS.buyerCommPct);
+    setInputValue('buyerConvFee', DEFAULTS.buyerConvFee);
+    setInputValue('sellerCommPct', DEFAULTS.sellerCommPct);
+    setInputValue('sellerConvFee', DEFAULTS.sellerConvFee);
+    setInputValue('lateFee', DEFAULTS.lateFee);
+    setInputValue('nocFee', DEFAULTS.nocFee);
+    setInputValue('assignmentFeePct', DEFAULTS.assignmentFeePct);
+    setChecked('hasMortgage', DEFAULTS.hasMortgage);
+    setInputValue('loanPct', DEFAULTS.loanPct);
+    setChecked('isRented', DEFAULTS.isRented);
+    setChecked('rentPrepaid', DEFAULTS.rentPrepaid);
+    setInputValue('dealDate', DEFAULTS.dealDate);
+    setInputValue('leaseStart', DEFAULTS.leaseStart);
+    setInputValue('leaseEnd', DEFAULTS.leaseEnd);
+    setInputValue('rentAnnual', DEFAULTS.rentAnnual);
+    setInputValue('scArea', DEFAULTS.scArea);
+    setInputValue('scRate', DEFAULTS.scRate);
+    setInputValue('scPrepaidUntil', DEFAULTS.scPrepaidUntil);
+    setInputValue('securityDeposit', DEFAULTS.securityDeposit);
+    setInputValue('bankFeePct', DEFAULTS.bankFeePct);
+    setInputValue('valuationFee', DEFAULTS.valuationFee);
+    setInputValue('dldMortgagePct', DEFAULTS.dldMortgagePct);
+    setInputValue('dldMortgageFixed', DEFAULTS.dldMortgageFixed);
+    setInputValue('insuranceYearly', DEFAULTS.insuranceYearly);
+    recompute();
+  } finally {
+    restoringDemo = false;
+  }
 }
 
 document.querySelectorAll('input').forEach(function(input){
   input.addEventListener('input', recompute);
   if (input.type === 'checkbox') input.addEventListener('change', recompute);
 });
-el('resetBtn').addEventListener('click', applyDefaults);
+(function bindReset(){
+  const btn = el('resetBtn');
+  if (!btn) return;
+  btn.type = 'button';
+  btn.addEventListener('click', applyDefaults);
+})();
 
 /* ---- export: text ---- */
 function buildBuyerText(){
