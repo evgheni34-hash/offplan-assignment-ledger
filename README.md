@@ -4,7 +4,7 @@ Live: [https://evgheni34-hash.github.io/offplan-assignment-ledger](https://evghe
 
 Static GitHub Pages calculator for a Dubai off-plan assignment (переуступка). Calculator on screen stays free. WhatsApp CTA (`+971 58 566 8337`, «разбор юнита») stays free and is never gated.
 
-**Export paywall:** first 2 successful share/export actions per browser are free (one `localStorage` counter for buyer + seller). Cancelled share does not count. The 3rd and later export/share click, if this browser is not unlocked, opens [Ziina 19 AED](https://pay.ziina.com/EvgheniC/3PHYGSxCy) in a new tab and shows **«Оплатил 19 — открыть экспорт навсегда»**. That control sets `localStorage` unlocked forever in this browser and then continues/enables export. Ziina has no return redirect; the page cannot verify payment and does not pretend a webhook exists. `?paid=1` is the same forever unlock (flag set, query stripped) if a return URL is added later. After the two free exports, hint: «Дальше — 19 AED за безлимитный экспорт в этом браузере».
+**Export paywall:** first 2 successful share/export actions per browser are free (one `localStorage` counter for buyer + seller). Those two have no paywall UI: the button **«Оплатил 19 — открыть экспорт навсегда»** is not on page load and is not shown before Ziina opens. Cancelled share does not count. The 3rd and later export/share click, if this browser is not unlocked, opens [Ziina 19 AED](https://pay.ziina.com/EvgheniC/3PHYGSxCy) in a new tab **and only then** reveals the paid button. A `ziinaOpened` flag persists so the button stays after they return from payment. That control sets `unlocked` forever in this browser (unlimited export, not one card; the tap is not counted). Ziina has no return redirect; the page cannot verify payment and does not pretend a webhook exists. `?paid=1` is the same forever unlock (flag set, query stripped) if a return URL is added later.
 
 ## Mortgage as LTV %
 
@@ -72,7 +72,7 @@ WhatsApp / text — separate lines only if amount > 0:
 
 ## How to test
 
-1. Open the live URL. Calculator and WhatsApp CTA stay free. Export twice (buyer or seller, share or download — one counter). Third export/share click opens Ziina and shows «Оплатил 19 — открыть экспорт навсегда». Tap that control → unlimited export in this browser, no further gate. `?paid=1` also unlocks forever and strips the query. Clearing site data resets the counter and the unlock flag.
+1. Open the live URL. Calculator and WhatsApp CTA stay free. Export twice (buyer or seller, share or download — one counter): no pay button, no paywall UI. Third export/share click opens Ziina and only then shows «Оплатил 19 — открыть экспорт навсегда». Reload still shows the button (Ziina-opened flag). Tap it → unlimited export in this browser, no further gate, tap is not a counted card. `?paid=1` also unlocks forever and strips the query. Clearing site data resets the counter and flags.
 2. Mortgage on: 50% of 1 195 000 = **597 500 AED**; 40% → 478 000; 60% → 717 000.
 3. «В аренде» on. Required fields start amber; they turn green when filled.
    - День сделки `2026-01-01`

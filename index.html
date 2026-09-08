@@ -645,7 +645,7 @@ const WA_PITCH = 'Здравствуйте! Нужен разбор / карто
 const FREE_EXPORTS = 2;
 const LS_EXPORT_COUNT = 'exportCount';
 const LS_UNLOCKED = 'unlocked';
-const LS_PAY_PROMPT = 'exportPayPrompt';
+const LS_ZIINA_OPENED = 'ziinaOpened';
 const ZIINA_PAY_URL = 'https://pay.ziina.com/EvgheniC/3PHYGSxCy';
 const UNLOCK_BTN_LABEL = 'Оплатил 19 — открыть экспорт навсегда';
 
@@ -1148,18 +1148,17 @@ function markExportSuccess(){
   updateExportHints();
 }
 
-function payPromptShown(){
-  try{ return localStorage.getItem(LS_PAY_PROMPT) === 'true'; } catch(e){ return false; }
+function ziinaWasOpened(){
+  try{ return localStorage.getItem(LS_ZIINA_OPENED) === 'true'; } catch(e){ return false; }
 }
 
-function markPayPrompt(){
-  try{ localStorage.setItem(LS_PAY_PROMPT, 'true'); } catch(e){}
+function markZiinaOpened(){
+  try{ localStorage.setItem(LS_ZIINA_OPENED, 'true'); } catch(e){}
 }
 
 function updateExportHints(){
-  const locked = !isUnlocked() && getExportCount() >= FREE_EXPORTS;
-  const showUnlock = !isUnlocked() && payPromptShown();
-  const text = locked ? 'Дальше — 19 AED за безлимитный экспорт в этом браузере' : '';
+  const showUnlock = !isUnlocked() && ziinaWasOpened();
+  const text = showUnlock ? 'Дальше — 19 AED за безлимитный экспорт в этом браузере' : '';
   ['buyerExportHint', 'sellerExportHint'].forEach(function(id){
     const node = el(id);
     if (!node) return;
@@ -1206,8 +1205,8 @@ function guardExport(fn, statusId){
     return;
   }
   pendingExport = fn;
-  markPayPrompt();
   openZiina();
+  markZiinaOpened();
   updateExportHints();
   if (statusId) setStatus(statusId, 'Открыли оплату. После перевода нажмите «Оплатил 19 — открыть экспорт навсегда».');
   const unlockBtn = el(statusId === 'sellerExportStatus' ? 'sellerUnlockBtn' : 'buyerUnlockBtn');
