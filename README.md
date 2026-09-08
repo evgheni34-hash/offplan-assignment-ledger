@@ -4,7 +4,7 @@ Live: [https://evgheni34-hash.github.io/offplan-assignment-ledger](https://evghe
 
 Static GitHub Pages calculator for a Dubai off-plan assignment (переуступка). Calculator on screen stays free. WhatsApp CTA (`+971 58 566 8337`, «разбор юнита») stays free and is never gated.
 
-**Export paywall:** first 2 successful share/export actions per browser are free (one `localStorage` counter for buyer + seller). Cancelled share does not count. The 3rd and later export/share click does not download or share — it opens [Ziina 19 AED](https://pay.ziina.com/EvgheniC/3PHYGSxCy) in a new tab. No `?paid=1`, no unlock flag: the page cannot see payment and does not pretend access opened. After the two free exports, a short hint near the buttons: «Дальше — 19 AED».
+**Export paywall:** first 2 successful share/export actions per browser are free (one `localStorage` counter for buyer + seller). Cancelled share does not count. The 3rd and later export/share click, if this browser is not unlocked, opens [Ziina 19 AED](https://pay.ziina.com/EvgheniC/3PHYGSxCy) in a new tab and shows **«Оплатил 19 — открыть экспорт навсегда»**. That control sets `localStorage` unlocked forever in this browser and then continues/enables export. Ziina has no return redirect; the page cannot verify payment and does not pretend a webhook exists. `?paid=1` is the same forever unlock (flag set, query stripped) if a return URL is added later. After the two free exports, hint: «Дальше — 19 AED за безлимитный экспорт в этом браузере».
 
 ## Mortgage as LTV %
 
@@ -72,7 +72,7 @@ WhatsApp / text — separate lines only if amount > 0:
 
 ## How to test
 
-1. Open the live URL. Calculator and WhatsApp CTA stay free. Export twice (buyer or seller, share or download — one counter). Third export/share click opens Ziina instead of the card. Hint «Дальше — 19 AED» after the two free uses. Clearing site data resets the counter. `?paid=1` does nothing.
+1. Open the live URL. Calculator and WhatsApp CTA stay free. Export twice (buyer or seller, share or download — one counter). Third export/share click opens Ziina and shows «Оплатил 19 — открыть экспорт навсегда». Tap that control → unlimited export in this browser, no further gate. `?paid=1` also unlocks forever and strips the query. Clearing site data resets the counter and the unlock flag.
 2. Mortgage on: 50% of 1 195 000 = **597 500 AED**; 40% → 478 000; 60% → 717 000.
 3. «В аренде» on. Required fields start amber; they turn green when filled.
    - День сделки `2026-01-01`

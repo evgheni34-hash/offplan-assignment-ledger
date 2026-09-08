@@ -200,6 +200,13 @@ body{
 .export-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 .export-btn:disabled{opacity:.5; cursor:not-allowed;}
 .export-btn.primary{border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
+.unlock-paid-btn{
+  flex:1 1 100%;
+  border-color:var(--accent); background:var(--accent); color:var(--accent-ink);
+  font-weight:600;
+}
+.unlock-paid-btn:hover{filter:brightness(1.06); color:var(--accent-ink); background:var(--accent);}
+.unlock-paid-btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
 .export-status{font-size:11px; color:var(--ink-faint); width:100%; min-height:14px;}
 .export-hint{font-size:11.5px; color:var(--ink-faint); width:100%; margin:0 0 2px;}
 .export-only{display:none;}
@@ -483,6 +490,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
 
       <div class="export-row no-export">
         <p class="export-hint" id="buyerExportHint"></p>
+        <button type="button" class="export-btn unlock-paid-btn" id="buyerUnlockBtn" hidden>Оплатил 19 — открыть экспорт навсегда</button>
         <button class="export-btn primary" id="buyerShareBtn">Поделиться карточкой</button>
         <button class="export-btn" id="buyerExportPngBtn">Скачать изображение</button>
         <button class="export-btn" id="buyerExportTxtBtn">Скачать / скопировать текст</button>
@@ -594,6 +602,7 @@ footer .bench{color:var(--ink-soft); font-family:"IBM Plex Mono",monospace;}
 
       <div class="export-row no-export">
         <p class="export-hint" id="sellerExportHint"></p>
+        <button type="button" class="export-btn unlock-paid-btn" id="sellerUnlockBtn" hidden>Оплатил 19 — открыть экспорт навсегда</button>
         <button class="export-btn primary" id="sellerShareBtn">Поделиться карточкой</button>
         <button class="export-btn" id="sellerExportPngBtn">Скачать изображение</button>
         <button class="export-btn" id="sellerExportTxtBtn">Скачать / скопировать текст</button>
@@ -635,7 +644,10 @@ const WA_NUMBER = '971585668337';
 const WA_PITCH = 'Здравствуйте! Нужен разбор / карточка под ваш юнит. 2-min off-plan assignment calc: кто платит DLD / NOC / комиссию, какой остаток у продавца.';
 const FREE_EXPORTS = 2;
 const LS_EXPORT_COUNT = 'exportCount';
+const LS_UNLOCKED = 'unlocked';
+const LS_PAY_PROMPT = 'exportPayPrompt';
 const ZIINA_PAY_URL = 'https://pay.ziina.com/EvgheniC/3PHYGSxCy';
+const UNLOCK_BTN_LABEL = 'Оплатил 19 — открыть экспорт навсегда';
 
 const DEFAULTS = {
   propName:"Sunrise Bay T2 — 501", dealPrice:1195000, originalPrice:1011676, paidPct:40,
@@ -1108,7 +1120,17 @@ function slug(str){
   return (str || 'deal').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'deal';
 }
 
-/* ---- export: two free, then Ziina (no unlock flag) ---- */
+/* ---- export: two free, then Ziina + self-confirm unlock (no webhook) ---- */
+let pendingExport = null;
+
+function isUnlocked(){
+  try{ return localStorage.getItem(LS_UNLOCKED) === 'true'; } catch(e){ return false; }
+}
+
+function persistUnlock(){
+  try{ localStorage.setItem(LS_UNLOCKED, 'true'); } catch(e){}
+}
+
 function getExportCount(){
   try{
     const n = parseInt(localStorage.getItem(LS_EXPORT_COUNT) || '0', 10);
@@ -1117,21 +1139,38 @@ function getExportCount(){
 }
 
 function canExport(){
-  return getExportCount() < FREE_EXPORTS;
+  return isUnlocked() || getExportCount() < FREE_EXPORTS;
 }
 
 function markExportSuccess(){
+  if (isUnlocked()) return;
   try{ localStorage.setItem(LS_EXPORT_COUNT, String(getExportCount() + 1)); } catch(e){}
   updateExportHints();
 }
 
+function payPromptShown(){
+  try{ return localStorage.getItem(LS_PAY_PROMPT) === 'true'; } catch(e){ return false; }
+}
+
+function markPayPrompt(){
+  try{ localStorage.setItem(LS_PAY_PROMPT, 'true'); } catch(e){}
+}
+
 function updateExportHints(){
-  const text = getExportCount() >= FREE_EXPORTS ? 'Дальше — 19 AED' : '';
+  const locked = !isUnlocked() && getExportCount() >= FREE_EXPORTS;
+  const showUnlock = !isUnlocked() && payPromptShown();
+  const text = locked ? 'Дальше — 19 AED за безлимитный экспорт в этом браузере' : '';
   ['buyerExportHint', 'sellerExportHint'].forEach(function(id){
     const node = el(id);
     if (!node) return;
     node.textContent = text;
     node.hidden = !text;
+  });
+  ['buyerUnlockBtn', 'sellerUnlockBtn'].forEach(function(id){
+    const node = el(id);
+    if (!node) return;
+    node.hidden = !showUnlock;
+    node.textContent = UNLOCK_BTN_LABEL;
   });
 }
 
@@ -1139,12 +1178,40 @@ function openZiina(){
   window.open(ZIINA_PAY_URL, '_blank', 'noopener,noreferrer');
 }
 
-function guardExport(fn){
+function honorPaidQuery(){
+  try{
+    const url = new URL(location.href);
+    if (url.searchParams.get('paid') !== '1') return;
+    persistUnlock();
+    url.searchParams.delete('paid');
+    const qs = url.searchParams.toString();
+    history.replaceState(null, '', url.pathname + (qs ? '?' + qs : '') + url.hash);
+  } catch(e){}
+}
+
+function confirmPaidUnlock(){
+  persistUnlock();
+  const resume = pendingExport;
+  pendingExport = null;
+  updateExportHints();
+  ['buyerExportStatus', 'sellerExportStatus'].forEach(function(id){
+    setStatus(id, 'Экспорт открыт навсегда в этом браузере.');
+  });
+  if (resume) resume();
+}
+
+function guardExport(fn, statusId){
   if (canExport()) {
     fn();
     return;
   }
+  pendingExport = fn;
+  markPayPrompt();
   openZiina();
+  updateExportHints();
+  if (statusId) setStatus(statusId, 'Открыли оплату. После перевода нажмите «Оплатил 19 — открыть экспорт навсегда».');
+  const unlockBtn = el(statusId === 'sellerExportStatus' ? 'sellerUnlockBtn' : 'buyerUnlockBtn');
+  if (unlockBtn) unlockBtn.focus();
 }
 
 /* ---- export: browser download + mobile share ---- */
@@ -1307,17 +1374,17 @@ el('buyerShareBtn').addEventListener('click', function(){
       STATE.propName + ' — обязательства покупателя',
       'buyerExportStatus'
     );
-  });
+  }, 'buyerExportStatus');
 });
 el('buyerExportPngBtn').addEventListener('click', function(){
   guardExport(function(){
     downloadPng('buyerCard', 'buyer-obligations-' + slug(STATE.propName) + '.png', 'buyerExportStatus');
-  });
+  }, 'buyerExportStatus');
 });
 el('buyerExportTxtBtn').addEventListener('click', function(){
   guardExport(function(){
     downloadOrCopyText('buyer-obligations-' + slug(STATE.propName) + '.txt', buildBuyerText(), 'buyerExportStatus');
-  });
+  }, 'buyerExportStatus');
 });
 el('sellerShareBtn').addEventListener('click', function(){
   guardExport(function(){
@@ -1328,19 +1395,25 @@ el('sellerShareBtn').addEventListener('click', function(){
       STATE.propName + ' — обязательства продавца',
       'sellerExportStatus'
     );
-  });
+  }, 'sellerExportStatus');
 });
 el('sellerExportPngBtn').addEventListener('click', function(){
   guardExport(function(){
     downloadPng('sellerShareCard', 'seller-obligations-' + slug(STATE.propName) + '.png', 'sellerExportStatus');
-  });
+  }, 'sellerExportStatus');
 });
 el('sellerExportTxtBtn').addEventListener('click', function(){
   guardExport(function(){
     downloadOrCopyText('seller-obligations-' + slug(STATE.propName) + '.txt', buildSellerText(), 'sellerExportStatus');
-  });
+  }, 'sellerExportStatus');
+});
+['buyerUnlockBtn', 'sellerUnlockBtn'].forEach(function(id){
+  const node = el(id);
+  if (!node) return;
+  node.addEventListener('click', confirmPaidUnlock);
 });
 
+honorPaidQuery();
 updateExportHints();
 recompute();
 </script>
